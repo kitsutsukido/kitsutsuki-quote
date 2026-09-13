@@ -7,7 +7,7 @@ export function Header() {
   return (
     <header className="flex items-center gap-3 px-4 py-3 bg-[var(--card)] text-[var(--ink)] border-b border-[var(--border)]">
       <Menu size={20} />
-      <span className="text-base font-semibold">{APP_NAME}</span>
+      <span className="font-display text-base font-semibold">{APP_NAME}</span>
     </header>
   );
 }

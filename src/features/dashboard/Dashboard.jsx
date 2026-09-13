@@ -7,7 +7,7 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
   return (
     <div>
       <div className="mb-6 pb-4 border-b border-[var(--border)]">
-        <p className="text-2xl font-bold text-[var(--ink)]">{APP_NAME}</p>
+        <p className="font-display text-2xl font-bold text-[var(--ink)]">{APP_NAME}</p>
       </div>
 
       <p className="text-lg font-medium mb-1 text-[var(--ink)]">ダッシュボード</p>
@@ -31,7 +31,7 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
                 <div>
                   <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-1">
                     <span>入稿進捗</span>
-                    <span>{stats.submitted}/{stats.total}</span>
+                    <span className="font-mono">{stats.submitted}/{stats.total}</span>
                   </div>
                   <div className="w-full h-1.5 bg-[var(--border)] rounded-full overflow-hidden mb-2">
                     <div className="h-full bg-[var(--accent)] rounded-full" style={{ width: `${stats.total ? (stats.submitted / stats.total) * 100 : 0}%` }} />
