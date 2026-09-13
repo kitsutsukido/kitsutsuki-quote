@@ -16,24 +16,24 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
-        <div className="bg-white border border-stone-200 rounded-lg px-4 py-2.5">
-          <p className="text-xs text-stone-500">未入稿</p>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-2.5">
+          <p className="text-xs text-[var(--text-muted)]">未入稿</p>
           <p className="text-xl font-medium">{notSubmitted}件</p>
         </div>
-        <div className="bg-white border border-stone-200 rounded-lg px-4 py-2.5">
-          <p className="text-xs text-stone-500">未購入</p>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-2.5">
+          <p className="text-xs text-[var(--text-muted)]">未購入</p>
           <p className="text-xl font-medium">{notPurchased}件</p>
         </div>
-        <div className="bg-white border border-rose-200 rounded-lg px-4 py-2.5">
-          <p className="text-xs text-rose-600">予定日超過</p>
-          <p className="text-xl font-medium text-rose-600">{overdue}件</p>
+        <div className="bg-[var(--card)] border border-[var(--danger)] rounded-lg px-4 py-2.5">
+          <p className="text-xs text-[var(--danger)]">予定日超過</p>
+          <p className="text-xl font-medium text-[var(--danger)]">{overdue}件</p>
         </div>
       </div>
 
-      <div className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-stone-500 border-b border-stone-200 text-left">
+            <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left">
               <th className="py-2 px-3 font-normal">入稿先</th>
               <th className="py-2 px-3 font-normal">内容</th>
               <th className="py-2 px-3 font-normal">仕様</th>
@@ -46,14 +46,14 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
             {items.map((it) => {
               const isOverdue = it.plannedDate && !it.actualDate && it.plannedDate < today;
               return (
-                <tr key={it.id} className="border-b border-stone-100 last:border-0">
+                <tr key={it.id} className="border-b border-[var(--border)] last:border-0">
                   <td className="py-2 px-3">{it.submitTo || "―"}</td>
                   <td className="py-2 px-3">{it.name}</td>
-                  <td className="py-2 px-3 text-stone-500">{specString(it)}</td>
+                  <td className="py-2 px-3 text-[var(--text-muted)]">{specString(it)}</td>
                   <td className="py-2 px-3 text-right">{it.qty}</td>
                   <td className="py-2 px-3">
                     <select
-                      className="border border-stone-300 rounded-md px-2 py-1 text-sm"
+                      className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
                       value={it.purchaseStatus}
                       onChange={(e) => update(it.id, { purchaseStatus: e.target.value })}
                     >
@@ -63,21 +63,21 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
                   <td className="py-2 px-3">
                     {it.actualDate ? (
                       <div className="flex items-center gap-2">
-                        <span className="bg-emerald-50 text-emerald-700 rounded-md px-2 py-1 text-xs flex items-center gap-1 whitespace-nowrap">
+                        <span className="bg-[var(--success-soft)] text-[var(--success)] rounded-md px-2 py-1 text-xs flex items-center gap-1 whitespace-nowrap">
                           入稿済
                         </span>
-                        <input type="date" className="border border-stone-300 rounded-md px-2 py-1 text-sm"
+                        <input type="date" className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
                           value={it.actualDate} onChange={(e) => update(it.id, { actualDate: e.target.value })} />
                         <button onClick={() => update(it.id, { actualDate: "" })}
-                          className="text-xs text-rose-600 border border-stone-300 rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
+                          className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
                           <Undo2 size={12} /> 取り消す
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        {isOverdue && <span className="text-xs text-rose-600">予定日超過（{it.plannedDate}）</span>}
+                        {isOverdue && <span className="text-xs text-[var(--danger)]">予定日超過（{it.plannedDate}）</span>}
                         <button onClick={() => update(it.id, { actualDate: today })}
-                          className="text-xs border border-emerald-700 text-emerald-800 rounded-md px-2 py-1 flex items-center gap-1">
+                          className="text-xs border border-[var(--accent)] text-[var(--accent)] rounded-md px-2 py-1 flex items-center gap-1">
                           <Upload size={12} /> 入稿する
                         </button>
                       </div>

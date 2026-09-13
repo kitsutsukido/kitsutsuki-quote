@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 在庫管理アプリ(謎文具キツツキ堂在庫台帳)と共通のカラートークン */
+.zk-root {
+  --paper: #FBF6E8;
+  --card: #FFFFFF;
+  --border: #D7DEE2;
+  --ink: #1B3A4B;
+  --ink-2: #24495D;
+  --ink-soft: #35606F;
+  --text: #1F2D35;
+  --text-muted: #5C6B72;
+  --accent: #1A527A;
+  --accent-soft: #D9E6EC;
+  --accent2: #5B6E78;
+  --success: #3F7D5C;
+  --success-soft: #DCEAE1;
+  --danger: #B8412A;
+  --danger-soft: #F5DCD3;
+}
