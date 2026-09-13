@@ -67,14 +67,14 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
   };
 
   const row = (it) => (
-    <tr key={it.id} className="border-b border-stone-100 last:border-0 group">
+    <tr key={it.id} className="border-b border-[var(--border)] last:border-0 group">
       <td className="py-1.5 pl-3 w-1/4">{it.name}</td>
-      <td className="py-1.5 text-stone-500">{specString(it)}</td>
+      <td className="py-1.5 text-[var(--text-muted)]">{specString(it)}</td>
       <td className="py-1.5 text-right w-16">{it.qty}</td>
       <td className="py-1.5 text-right w-20">{(it.amount / it.qty).toFixed(1)}円</td>
       <td className="py-1.5 text-right w-24">{it.amount.toLocaleString()}円</td>
       <td className="py-1.5 pl-2 w-14 text-right">
-        <button onClick={() => setEditingItem(it)} className="text-xs text-stone-400 hover:text-emerald-700 underline underline-offset-2" title="編集">
+        <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2" title="編集">
           編集
         </button>
       </td>
@@ -89,30 +89,30 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
             key={s.id}
             className={`flex items-center gap-1.5 text-sm pl-3 pr-1.5 py-1 rounded-md border ${
               s.id === activeSessionId
-                ? s.status === "確定" ? "border-emerald-700 bg-emerald-50 text-emerald-800 font-medium" : "border-stone-400 bg-stone-100 text-stone-700"
-                : "border-stone-300 text-stone-500 hover:bg-stone-100"
+                ? s.status === "確定" ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)] font-medium" : "border-[var(--ink-soft)] bg-[var(--card)] text-[var(--text)]"
+                : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card)]"
             }`}
           >
             <button onClick={() => setActiveSessionId(s.id)} className="flex items-center gap-1">
-              {s.label} <span className="text-xs text-stone-400">{s.date}</span>
+              {s.label} <span className="text-xs text-[var(--text-muted)]">{s.date}</span>
             </button>
-            <button onClick={() => deleteSession(s.id)} title="このセッションを削除" className="text-stone-400 hover:text-rose-600 rounded p-0.5">
+            <button onClick={() => deleteSession(s.id)} title="このセッションを削除" className="text-[var(--text-muted)] hover:text-[var(--danger)] rounded p-0.5">
               <X size={13} />
             </button>
           </div>
         ))}
-        <button onClick={addSession} className="text-sm px-3 py-1.5 border border-stone-300 rounded-md flex items-center gap-1 text-stone-600" title={isReprint ? "増刷のため、仮を経ずにそのまま確定見積もりとして追加されます" : "初回のため、まず仮見積もりとして追加されます"}>
+        <button onClick={addSession} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]" title={isReprint ? "増刷のため、仮を経ずにそのまま確定見積もりとして追加されます" : "初回のため、まず仮見積もりとして追加されます"}>
           <Plus size={14} /> {isReprint ? "増刷の見積もりを確定で追加" : "仮見積もりを追加"}
         </button>
       </div>
 
-      <div className="bg-white border border-stone-200 rounded-lg p-4">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
         {nested.map(({ outer, directItems, subGroups, subtotal, count }) => {
           return (
-            <div key={outer.id} className="mb-4 last:mb-0 border border-stone-200 rounded-lg p-3">
+            <div key={outer.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-stone-800">{outer.name}<span className="text-xs text-stone-400 font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
-                <span className="text-xs text-stone-500">{count}点・{subtotal.toLocaleString()}円</span>
+                <span className="text-sm font-medium text-[var(--ink)]">{outer.name}<span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
+                <span className="text-xs text-[var(--text-muted)]">{count}点・{subtotal.toLocaleString()}円</span>
               </div>
               {directItems.length > 0 && (
                 <table className="w-full text-sm mb-2">
@@ -126,7 +126,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
                   <div key={group.id} className="mb-2 last:mb-0 ml-2">
                     <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
                       <span className="text-sm font-medium">{group.name}</span>
-                      <span className="text-xs text-stone-500">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
+                      <span className="text-xs text-[var(--text-muted)]">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
                     </div>
                     <table className="w-full text-sm mt-1">
                       <tbody>{subItems.map(row)}</tbody>
@@ -142,7 +142,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
             <tbody>{ungrouped.map(row)}</tbody>
           </table>
         )}
-        <div className="flex justify-between items-center pt-3 mt-2 border-t border-stone-200">
+        <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
           <span className="text-sm font-medium">経費合計</span>
           <span className="text-sm font-medium">{total.toLocaleString()}円</span>
         </div>
@@ -167,7 +167,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
           onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
         />
       ) : (
-        <button onClick={() => setShowForm(true)} className="text-sm px-3 py-1.5 border border-stone-300 rounded-md flex items-center gap-1 text-stone-600">
+        <button onClick={() => setShowForm(true)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
           <Plus size={14} /> 明細を追加
         </button>
       ))}

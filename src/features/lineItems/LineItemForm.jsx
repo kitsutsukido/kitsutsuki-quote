@@ -23,8 +23,8 @@ export function LineItemForm({ groups, onCancel, onSave, onDelete, sessionId, in
   const removeProcess = (i) => setForm({ ...form, processes: form.processes.filter((_, idx) => idx !== i) });
 
   return (
-    <div className="border border-stone-300 rounded-lg p-4 bg-white space-y-4">
-      <p className="text-sm font-medium text-stone-800">{isEdit ? "明細を編集" : "明細を追加"}</p>
+    <div className="border border-[var(--border)] rounded-lg p-4 bg-[var(--card)] space-y-4">
+      <p className="text-sm font-medium text-[var(--ink)]">{isEdit ? "明細を編集" : "明細を追加"}</p>
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="梱包グループ">
@@ -41,8 +41,8 @@ export function LineItemForm({ groups, onCancel, onSave, onDelete, sessionId, in
         </Field>
       </div>
 
-      <div className="border border-stone-200 rounded-md p-3 space-y-3">
-        <p className="text-xs text-stone-500">仕様</p>
+      <div className="border border-[var(--border)] rounded-md p-3 space-y-3">
+        <p className="text-xs text-[var(--text-muted)]">仕様</p>
         <div className="grid grid-cols-3 gap-3">
           <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
@@ -61,10 +61,10 @@ export function LineItemForm({ groups, onCancel, onSave, onDelete, sessionId, in
           </Field>
         </div>
         <div>
-          <label className="text-xs text-stone-500 block mb-1">加工(複数可)</label>
+          <label className="text-xs text-[var(--text-muted)] block mb-1">加工(複数可)</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {form.processes.map((p, i) => (
-              <span key={i} className="bg-stone-100 rounded-md px-2 py-1 text-sm flex items-center gap-1">
+              <span key={i} className="bg-[var(--paper)] rounded-md px-2 py-1 text-sm flex items-center gap-1">
                 {p}
                 <X size={13} className="cursor-pointer" onClick={() => removeProcess(i)} />
               </span>
@@ -78,11 +78,11 @@ export function LineItemForm({ groups, onCancel, onSave, onDelete, sessionId, in
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addProcess(); } }}
               placeholder="加工名を入力してEnterで追加"
             />
-            <button onClick={addProcess} className="text-sm px-3 border border-stone-300 rounded-md">追加</button>
+            <button onClick={addProcess} className="text-sm px-3 border border-[var(--border)] rounded-md">追加</button>
           </div>
         </div>
-        <div className="bg-stone-50 rounded-md px-3 py-2 text-sm">
-          <span className="text-stone-400 text-xs">仕様プレビュー：</span> <span className="font-medium">{specString(form)}</span>
+        <div className="bg-[var(--paper)] rounded-md px-3 py-2 text-sm">
+          <span className="text-[var(--text-muted)] text-xs">仕様プレビュー：</span> <span className="font-medium">{specString(form)}</span>
         </div>
       </div>
 
@@ -97,17 +97,17 @@ export function LineItemForm({ groups, onCancel, onSave, onDelete, sessionId, in
           {isEdit && (
             <button
               onClick={() => onDelete(form.id)}
-              className="text-sm px-3 py-1.5 border border-rose-300 text-rose-600 rounded-md flex items-center gap-1"
+              className="text-sm px-3 py-1.5 border border-[var(--danger)] text-[var(--danger)] rounded-md flex items-center gap-1"
             >
               <Trash2 size={14} /> この明細を削除
             </button>
           )}
         </div>
         <div className="flex gap-2">
-          <button onClick={onCancel} className="text-sm px-3 py-1.5 border border-stone-300 rounded-md">キャンセル</button>
+          <button onClick={onCancel} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">キャンセル</button>
           <button
             onClick={() => onSave({ ...form, qty: Number(form.qty), amount: Number(form.amount) })}
-            className="text-sm px-3 py-1.5 border border-emerald-700 text-emerald-800 rounded-md"
+            className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md"
           >
             {isEdit ? "保存" : "追加"}
           </button>
