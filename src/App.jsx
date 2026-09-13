@@ -9,6 +9,7 @@ import {
   initialPatterns,
 } from "./data/seedData.js";
 import { resolveProductDeepLink } from "./lib/deepLink.js";
+import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
@@ -43,65 +44,69 @@ export default function App() {
   ];
 
   return (
-    <div className="zk-root min-h-screen bg-[var(--paper)] flex text-[var(--text)]">
-      <Sidebar
-        products={products}
-        projects={projects}
-        selectedId={selectedId}
-        view={view}
-        setView={setView}
-        setSelectedId={setSelectedId}
-        onCreateNew={() => {}}
-      />
+    <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
+      <Header />
 
-      <main className="flex-1 p-6 max-w-4xl">
-        {view === "dashboard" ? (
-          <Dashboard
-            products={products}
-            projects={projects}
-            sessions={sessions}
-            lineItems={lineItems}
-            onOpen={(id) => { setSelectedId(id); setView("project"); }}
-          />
-        ) : (
-          <>
-            <p className="text-lg font-medium mb-1 text-[var(--ink)]">{product.name}</p>
-            <p className="text-sm text-[var(--text-muted)] mb-4">{project.round}・印刷部数 {project.qty}部</p>
+      <div className="flex flex-1">
+        <Sidebar
+          products={products}
+          projects={projects}
+          selectedId={selectedId}
+          view={view}
+          setView={setView}
+          setSelectedId={setSelectedId}
+          onCreateNew={() => {}}
+        />
 
-            <div className="flex gap-1 border-b border-[var(--border)] mb-4">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`text-sm px-3 py-2 border-b-2 -mb-px ${
-                    tab === t.id ? "border-[var(--accent)] text-[var(--accent)] font-medium" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+        <main className="flex-1 p-6 max-w-4xl">
+          {view === "dashboard" ? (
+            <Dashboard
+              products={products}
+              projects={projects}
+              sessions={sessions}
+              lineItems={lineItems}
+              onOpen={(id) => { setSelectedId(id); setView("project"); }}
+            />
+          ) : (
+            <>
+              <p className="text-lg font-medium mb-1 text-[var(--ink)]">{product.name}</p>
+              <p className="text-sm text-[var(--text-muted)] mb-4">{project.round}・印刷部数 {project.qty}部</p>
 
-            {tab === "quote" && (
-              <QuoteTab project={project} projects={projects} sessions={sessions} setSessions={setSessions} groups={groups} lineItems={lineItems} setLineItems={setLineItems} />
-            )}
-            {tab === "submission" && (
-              <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} />
-            )}
-            {tab === "profit" && (
-              <ProfitTab
-                project={project}
-                sessions={sessions}
-                lineItems={lineItems}
-                settings={settings}
-                setSettings={setSettings}
-                patterns={patterns}
-                setPatterns={setPatterns}
-              />
-            )}
-          </>
-        )}
-      </main>
+              <div className="flex gap-1 border-b border-[var(--border)] mb-4">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    className={`text-sm px-3 py-2 border-b-2 -mb-px ${
+                      tab === t.id ? "border-[var(--accent)] text-[var(--accent)] font-medium" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {tab === "quote" && (
+                <QuoteTab project={project} projects={projects} sessions={sessions} setSessions={setSessions} groups={groups} lineItems={lineItems} setLineItems={setLineItems} />
+              )}
+              {tab === "submission" && (
+                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} />
+              )}
+              {tab === "profit" && (
+                <ProfitTab
+                  project={project}
+                  sessions={sessions}
+                  lineItems={lineItems}
+                  settings={settings}
+                  setSettings={setSettings}
+                  patterns={patterns}
+                  setPatterns={setPatterns}
+                />
+              )}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
