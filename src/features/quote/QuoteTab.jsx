@@ -106,71 +106,79 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
         </button>
       </div>
 
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
-        {nested.map(({ outer, directItems, subGroups, subtotal, count }) => {
-          return (
-            <div key={outer.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-[var(--ink)]">{outer.name}<span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
-                <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
-              </div>
-              {directItems.length > 0 && (
-                <table className="w-full text-sm mb-2">
-                  <tbody>{directItems.map(row)}</tbody>
-                </table>
-              )}
-              {subGroups.map(({ group, items: subItems }) => {
-                const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
-                const subSubtotal = subItems.reduce((s, it) => s + it.amount, 0);
-                return (
-                  <div key={group.id} className="mb-2 last:mb-0 ml-2">
-                    <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
-                      <span className="text-sm font-medium">{group.name}</span>
-                      <span className="text-xs text-[var(--text-muted)] font-mono">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
-                    </div>
-                    <table className="w-full text-sm mt-1">
-                      <tbody>{subItems.map(row)}</tbody>
-                    </table>
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
-        {ungrouped.length > 0 && (
-          <table className="w-full text-sm">
-            <tbody>{ungrouped.map(row)}</tbody>
-          </table>
-        )}
-        <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
-          <span className="text-sm font-medium">経費合計</span>
-          <span className="text-sm font-medium font-mono">{total.toLocaleString()}円</span>
+      {!activeSessionId ? (
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 text-center text-sm text-[var(--text-muted)]">
+          セッションがまだありません。上の「{isReprint ? "増刷の見積もりを確定で追加" : "仮見積もりを追加"}」ボタンから作成してください。
         </div>
-      </div>
-
-      {editingItem && (
-        <LineItemForm
-          groups={projectGroups}
-          sessionId={activeSessionId}
-          initial={editingItem}
-          onCancel={() => setEditingItem(null)}
-          onDelete={deleteItem}
-          onSave={(item) => { setLineItems((prev) => prev.map((li2) => (li2.id === item.id ? item : li2))); setEditingItem(null); }}
-        />
-      )}
-
-      {!editingItem && (showForm ? (
-        <LineItemForm
-          groups={projectGroups}
-          sessionId={activeSessionId}
-          onCancel={() => setShowForm(false)}
-          onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
-        />
       ) : (
-        <button onClick={() => setShowForm(true)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
-          <Plus size={14} /> 明細を追加
-        </button>
-      ))}
+        <>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+            {nested.map(({ outer, directItems, subGroups, subtotal, count }) => {
+              return (
+                <div key={outer.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-[var(--ink)]">{outer.name}<span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
+                    <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
+                  </div>
+                  {directItems.length > 0 && (
+                    <table className="w-full text-sm mb-2">
+                      <tbody>{directItems.map(row)}</tbody>
+                    </table>
+                  )}
+                  {subGroups.map(({ group, items: subItems }) => {
+                    const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
+                    const subSubtotal = subItems.reduce((s, it) => s + it.amount, 0);
+                    return (
+                      <div key={group.id} className="mb-2 last:mb-0 ml-2">
+                        <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
+                          <span className="text-sm font-medium">{group.name}</span>
+                          <span className="text-xs text-[var(--text-muted)] font-mono">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
+                        </div>
+                        <table className="w-full text-sm mt-1">
+                          <tbody>{subItems.map(row)}</tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+            {ungrouped.length > 0 && (
+              <table className="w-full text-sm">
+                <tbody>{ungrouped.map(row)}</tbody>
+              </table>
+            )}
+            <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
+              <span className="text-sm font-medium">経費合計</span>
+              <span className="text-sm font-medium font-mono">{total.toLocaleString()}円</span>
+            </div>
+          </div>
+
+          {editingItem && (
+            <LineItemForm
+              groups={projectGroups}
+              sessionId={activeSessionId}
+              initial={editingItem}
+              onCancel={() => setEditingItem(null)}
+              onDelete={deleteItem}
+              onSave={(item) => { setLineItems((prev) => prev.map((li2) => (li2.id === item.id ? item : li2))); setEditingItem(null); }}
+            />
+          )}
+
+          {!editingItem && (showForm ? (
+            <LineItemForm
+              groups={projectGroups}
+              sessionId={activeSessionId}
+              onCancel={() => setShowForm(false)}
+              onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
+            />
+          ) : (
+            <button onClick={() => setShowForm(true)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
+              <Plus size={14} /> 明細を追加
+            </button>
+          ))}
+        </>
+      )}
     </div>
   );
 }

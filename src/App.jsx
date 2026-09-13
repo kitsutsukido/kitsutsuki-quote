@@ -25,7 +25,7 @@ const deepLink = resolveProductDeepLink(
 // ---------- ルートアプリ ----------
 export default function App() {
   const [products] = useState(initialProducts);
-  const [projects] = useState(initialProjects);
+  const [projects, setProjects] = useState(initialProjects);
   const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
   const [view, setView] = useState(deepLink?.view ?? "dashboard");
   const [sessions, setSessions] = useState(initialSessions);
@@ -51,6 +51,7 @@ export default function App() {
         <Sidebar
           products={products}
           projects={projects}
+          setProjects={setProjects}
           selectedId={selectedId}
           view={view}
           setView={setView}
