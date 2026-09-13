@@ -1,4 +1,5 @@
 import { projectStats } from "../../lib/projectStats.js";
+import { RelatedApps } from "../relatedApps/RelatedApps.jsx";
 
 // ---------- ダッシュボード ----------
 export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
@@ -42,6 +43,8 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
           );
         })}
       </div>
+
+      <RelatedApps />
     </div>
   );
 }
