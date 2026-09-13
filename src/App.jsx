@@ -8,18 +8,25 @@ import {
   initialProfitSettings,
   initialPatterns,
 } from "./data/seedData.js";
+import { resolveProductDeepLink } from "./lib/deepLink.js";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
 import { SubmissionTab } from "./features/submission/SubmissionTab.jsx";
 import { ProfitTab } from "./features/profit/ProfitTab.jsx";
 
+const deepLink = resolveProductDeepLink(
+  initialProducts,
+  initialProjects,
+  typeof window !== "undefined" ? window.location.search : ""
+);
+
 // ---------- ルートアプリ ----------
 export default function App() {
   const [products] = useState(initialProducts);
   const [projects] = useState(initialProjects);
-  const [selectedId, setSelectedId] = useState(initialProjects[1].id); // 進行中の深海2026を初期表示
-  const [view, setView] = useState("dashboard");
+  const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
+  const [view, setView] = useState(deepLink?.view ?? "dashboard");
   const [sessions, setSessions] = useState(initialSessions);
   const [groups] = useState(initialGroups);
   const [lineItems, setLineItems] = useState(initialLineItems);
