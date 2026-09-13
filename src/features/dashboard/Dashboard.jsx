@@ -1,15 +1,10 @@
 import { projectStats } from "../../lib/projectStats.js";
-import { APP_NAME } from "../../lib/constants.js";
 
 // ---------- ダッシュボード ----------
 export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
   const active = projects.filter((p) => p.status === "進行中");
   return (
     <div>
-      <div className="mb-6 pb-4 border-b border-[var(--border)]">
-        <p className="font-display text-2xl font-bold text-[var(--ink)]">{APP_NAME}</p>
-      </div>
-
       <p className="text-lg font-medium mb-1 text-[var(--ink)]">ダッシュボード</p>
       <p className="text-sm text-[var(--text-muted)] mb-4">進行中の案件 {active.length}件</p>
       <div className="grid grid-cols-2 gap-3">
