@@ -1,29 +1,31 @@
 // ---------- 初期データ(見積もり・入稿管理のスプレッドシートから) ----------
-// シリーズ = 商品(デザイン)。案件 = その商品の印刷ロット(発注のたびに増えていく想定)
-export const initialSeries = [
-  { id: "ser-shinkai", name: "深海遊園地からの招待状" },
-  { id: "ser-trump", name: "不揃いなトランプ王国からの招待状" },
-  { id: "ser-shindai", name: "寝台列車からの招待状" },
-  { id: "ser-kangoku", name: "おかしな監獄からの招待状" },
+// 商品 = 在庫管理アプリの商品マスタと共通のproductIdで識別する(デザイン単位)。
+// 商品名は当面、見積もりアプリ側の表示用キャッシュとして保持する。
+// 案件 = その商品の印刷ロット(発注のたびに増えていく想定)
+export const initialProducts = [
+  { id: "P001", name: "深海遊園地からの招待状" },
+  { id: "P003", name: "不揃いなトランプ王国からの招待状" },
+  { id: "P002", name: "空飛ぶ寝台列車からの招待状" },
+  { id: "P004", name: "おかしな監獄からの招待状" },
 ];
 
 export const initialProjects = [
-  { id: "prj-shinkai-2025", seriesId: "ser-shinkai", round: "2025年11月ロット", qty: 500, status: "完了" },
-  { id: "prj-shinkai", seriesId: "ser-shinkai", round: "2026年5月ロット", qty: 500, status: "進行中" },
-  { id: "prj-trump", seriesId: "ser-trump", round: "2026年4月ロット", qty: 500, status: "進行中" },
-  { id: "prj-shindai", seriesId: "ser-shindai", round: "2024年6月ロット", qty: 500, status: "完了" },
-  { id: "prj-kangoku", seriesId: "ser-kangoku", round: "2025年5月ロット", qty: 500, status: "完了" },
+  { id: "prj-shinkai-2025", productId: "P001", round: "2025年11月ロット", qty: 500, status: "完了" },
+  { id: "prj-shinkai", productId: "P001", round: "2026年5月ロット", qty: 500, status: "進行中" },
+  { id: "prj-trump", productId: "P003", round: "2026年4月ロット", qty: 500, status: "進行中" },
+  { id: "prj-shindai", productId: "P002", round: "2024年6月ロット", qty: 500, status: "完了" },
+  { id: "prj-kangoku", productId: "P004", round: "2025年5月ロット", qty: 500, status: "完了" },
 ];
 
 // 梱包グループは2階層：外側の梱包(例：OPP＝全品まとめて入れる袋) > 中の小分け梱包(例：招待状・アトラクション謎セット)
 export const initialGroups = [
-  { id: "outer1", seriesId: "ser-shinkai", name: "OPP", parentId: null, color: "sky" },
-  { id: "g-clearfile", seriesId: "ser-shinkai", name: "クリアファイル", parentId: "outer1", color: "amber" },
-  { id: "g-invite", seriesId: "ser-shinkai", name: "招待状", parentId: "outer1", color: "emerald" },
-  { id: "g-attraction", seriesId: "ser-shinkai", name: "アトラクション謎セット", parentId: "outer1", color: "violet" },
-  { id: "g-backyard", seriesId: "ser-shinkai", name: "バックヤード", parentId: "outer1", color: "rose" },
-  { id: "g-triton", seriesId: "ser-shinkai", name: "トリトンの宝箱", parentId: "outer1", color: "sky" },
-  { id: "g-labo", seriesId: "ser-shinkai", name: "ラボ", parentId: "outer1", color: "amber" },
+  { id: "outer1", productId: "P001", name: "OPP", parentId: null, color: "sky" },
+  { id: "g-clearfile", productId: "P001", name: "クリアファイル", parentId: "outer1", color: "amber" },
+  { id: "g-invite", productId: "P001", name: "招待状", parentId: "outer1", color: "emerald" },
+  { id: "g-attraction", productId: "P001", name: "アトラクション謎セット", parentId: "outer1", color: "violet" },
+  { id: "g-backyard", productId: "P001", name: "バックヤード", parentId: "outer1", color: "rose" },
+  { id: "g-triton", productId: "P001", name: "トリトンの宝箱", parentId: "outer1", color: "sky" },
+  { id: "g-labo", productId: "P001", name: "ラボ", parentId: "outer1", color: "amber" },
 ];
 
 export const initialSessions = [

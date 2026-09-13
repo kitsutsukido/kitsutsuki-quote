@@ -13,7 +13,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
-  const projectGroups = groups.filter((g) => g.seriesId === project.seriesId);
+  const projectGroups = groups.filter((g) => g.productId === project.productId);
   const topGroups = projectGroups.filter((g) => !g.parentId);
   const items = lineItems.filter((it) => it.sessionId === activeSessionId);
   const total = items.reduce((s, it) => s + it.amount, 0);
@@ -33,10 +33,10 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
 
   const ungrouped = items.filter((it) => !it.groupId);
 
-  // この商品(シリーズ)でこれまでに確定見積もりが一度でもあれば、以降は仮を経ずにいきなり確定になる
-  const seriesProjectIds = projects.filter((p) => p.seriesId === project.seriesId).map((p) => p.id);
-  const seriesHasConfirmedBefore = sessions.some((s) => seriesProjectIds.includes(s.projectId) && s.status === "確定");
-  const isReprint = seriesHasConfirmedBefore;
+  // この商品でこれまでに確定見積もりが一度でもあれば、以降は仮を経ずにいきなり確定になる
+  const productProjectIds = projects.filter((p) => p.productId === project.productId).map((p) => p.id);
+  const productHasConfirmedBefore = sessions.some((s) => productProjectIds.includes(s.projectId) && s.status === "確定");
+  const isReprint = productHasConfirmedBefore;
 
   const addSession = () => {
     const id = `qs-${Date.now()}`;
