@@ -70,9 +70,9 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
     <tr key={it.id} className="border-b border-[var(--border)] last:border-0 group">
       <td className="py-1.5 pl-3 w-1/4">{it.name}</td>
       <td className="py-1.5 text-[var(--text-muted)]">{specString(it)}</td>
-      <td className="py-1.5 text-right w-16">{it.qty}</td>
-      <td className="py-1.5 text-right w-20">{(it.amount / it.qty).toFixed(1)}円</td>
-      <td className="py-1.5 text-right w-24">{it.amount.toLocaleString()}円</td>
+      <td className="py-1.5 text-right w-16 font-mono">{it.qty}</td>
+      <td className="py-1.5 text-right w-20 font-mono">{(it.amount / it.qty).toFixed(1)}円</td>
+      <td className="py-1.5 text-right w-24 font-mono">{it.amount.toLocaleString()}円</td>
       <td className="py-1.5 pl-2 w-14 text-right">
         <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2" title="編集">
           編集
@@ -112,7 +112,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
             <div key={outer.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm font-medium text-[var(--ink)]">{outer.name}<span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
-                <span className="text-xs text-[var(--text-muted)]">{count}点・{subtotal.toLocaleString()}円</span>
+                <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
               </div>
               {directItems.length > 0 && (
                 <table className="w-full text-sm mb-2">
@@ -126,7 +126,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
                   <div key={group.id} className="mb-2 last:mb-0 ml-2">
                     <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
                       <span className="text-sm font-medium">{group.name}</span>
-                      <span className="text-xs text-[var(--text-muted)]">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
+                      <span className="text-xs text-[var(--text-muted)] font-mono">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
                     </div>
                     <table className="w-full text-sm mt-1">
                       <tbody>{subItems.map(row)}</tbody>
@@ -144,7 +144,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
         )}
         <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
           <span className="text-sm font-medium">経費合計</span>
-          <span className="text-sm font-medium">{total.toLocaleString()}円</span>
+          <span className="text-sm font-medium font-mono">{total.toLocaleString()}円</span>
         </div>
       </div>
 

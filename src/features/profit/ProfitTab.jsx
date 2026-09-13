@@ -36,7 +36,7 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
           <Field label="現地販売分配率(%)"><input type="number" className={inputCls} value={s.localSalesRate} onChange={setS("localSalesRate")} /></Field>
           <Field label="版権料率(%)"><input type="number" className={inputCls} value={s.royaltyRate} onChange={setS("royaltyRate")} /></Field>
         </div>
-        <p className="text-xs text-[var(--text-muted)] mt-2">確定見積もりの経費合計：{costTotal.toLocaleString()}円(基準{project.qty}部)</p>
+        <p className="text-xs text-[var(--text-muted)] mt-2">確定見積もりの経費合計：<span className="font-mono">{costTotal.toLocaleString()}円</span>(基準{project.qty}部)</p>
       </div>
 
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
@@ -95,11 +95,11 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
           <tbody>
             {rows.map((r) => (
               <tr key={r.vol} className="border-b border-[var(--border)] last:border-0">
-                <td className="py-1.5">{r.vol}部</td>
-                <td className="py-1.5 text-right">{Math.round(r.revenue).toLocaleString()}円</td>
-                <td className="py-1.5 text-right">{Math.round(r.fees).toLocaleString()}円</td>
-                <td className={`py-1.5 text-right ${r.profit < 0 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{Math.round(r.profit).toLocaleString()}円</td>
-                <td className="py-1.5 text-right">{(r.margin * 100).toFixed(1)}%</td>
+                <td className="py-1.5 font-mono">{r.vol}部</td>
+                <td className="py-1.5 text-right font-mono">{Math.round(r.revenue).toLocaleString()}円</td>
+                <td className="py-1.5 text-right font-mono">{Math.round(r.fees).toLocaleString()}円</td>
+                <td className={`py-1.5 text-right font-mono ${r.profit < 0 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{Math.round(r.profit).toLocaleString()}円</td>
+                <td className="py-1.5 text-right font-mono">{(r.margin * 100).toFixed(1)}%</td>
               </tr>
             ))}
           </tbody>

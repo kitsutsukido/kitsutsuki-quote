@@ -18,15 +18,15 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
       <div className="flex gap-3">
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-2.5">
           <p className="text-xs text-[var(--text-muted)]">未入稿</p>
-          <p className="text-xl font-medium">{notSubmitted}件</p>
+          <p className="text-xl font-medium font-mono">{notSubmitted}件</p>
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-2.5">
           <p className="text-xs text-[var(--text-muted)]">未購入</p>
-          <p className="text-xl font-medium">{notPurchased}件</p>
+          <p className="text-xl font-medium font-mono">{notPurchased}件</p>
         </div>
         <div className="bg-[var(--card)] border border-[var(--danger)] rounded-lg px-4 py-2.5">
           <p className="text-xs text-[var(--danger)]">予定日超過</p>
-          <p className="text-xl font-medium text-[var(--danger)]">{overdue}件</p>
+          <p className="text-xl font-medium font-mono text-[var(--danger)]">{overdue}件</p>
         </div>
       </div>
 
@@ -50,7 +50,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
                   <td className="py-2 px-3">{it.submitTo || "―"}</td>
                   <td className="py-2 px-3">{it.name}</td>
                   <td className="py-2 px-3 text-[var(--text-muted)]">{specString(it)}</td>
-                  <td className="py-2 px-3 text-right">{it.qty}</td>
+                  <td className="py-2 px-3 text-right font-mono">{it.qty}</td>
                   <td className="py-2 px-3">
                     <select
                       className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
