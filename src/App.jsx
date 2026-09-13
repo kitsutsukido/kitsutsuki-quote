@@ -72,7 +72,6 @@ export default function App() {
         <Sidebar
           products={products}
           projects={projects}
-          registerLot={registerLot}
           selectedId={selectedId}
           selectedProductId={selectedProductId}
           view={view}
