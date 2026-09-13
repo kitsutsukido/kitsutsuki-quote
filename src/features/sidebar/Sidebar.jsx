@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Plus, ChevronRight, ChevronDown } from "lucide-react";
 
-// ---------- サイドバー(シリーズごとにグループ化、既存/新規タブ) ----------
-export function Sidebar({ series, projects, selectedId, view, setView, setSelectedId, onCreateNew }) {
+// ---------- サイドバー(商品ごとにグループ化、既存/新規タブ) ----------
+export function Sidebar({ products, projects, selectedId, view, setView, setSelectedId, onCreateNew }) {
   const [sideTab, setSideTab] = useState("existing"); // existing | new
-  const [openSeries, setOpenSeries] = useState(() => {
+  const [openProducts, setOpenProducts] = useState(() => {
     const s = new Set();
     const selProj = projects.find((p) => p.id === selectedId);
-    if (selProj) s.add(selProj.seriesId);
+    if (selProj) s.add(selProj.productId);
     return s;
   });
-  const toggleSeries = (id) => setOpenSeries((prev) => {
+  const toggleProduct = (id) => setOpenProducts((prev) => {
     const next = new Set(prev);
     next.has(id) ? next.delete(id) : next.add(id);
     return next;
@@ -43,21 +43,21 @@ export function Sidebar({ series, projects, selectedId, view, setView, setSelect
 
       {sideTab === "existing" ? (
         <div>
-          {series.map((s) => {
-            const seriesProjects = projects.filter((p) => p.seriesId === s.id);
-            const isOpen = openSeries.has(s.id);
+          {products.map((prod) => {
+            const productProjects = projects.filter((p) => p.productId === prod.id);
+            const isOpen = openProducts.has(prod.id);
             return (
-              <div key={s.id} className="mb-1">
+              <div key={prod.id} className="mb-1">
                 <button
-                  onClick={() => toggleSeries(s.id)}
+                  onClick={() => toggleProduct(prod.id)}
                   className="w-full flex items-center justify-between px-2 py-1.5 text-sm text-stone-700 hover:bg-stone-100 rounded-md"
                 >
-                  <span className="truncate">{s.name}</span>
+                  <span className="truncate">{prod.name}</span>
                   {isOpen ? <ChevronDown size={14} className="shrink-0" /> : <ChevronRight size={14} className="shrink-0" />}
                 </button>
                 {isOpen && (
                   <div className="ml-2 border-l border-stone-200 pl-2">
-                    {seriesProjects.map((p) => (
+                    {productProjects.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => { setSelectedId(p.id); setView("project"); }}

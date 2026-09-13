@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  initialSeries,
+  initialProducts,
   initialProjects,
   initialGroups,
   initialSessions,
@@ -8,18 +8,25 @@ import {
   initialProfitSettings,
   initialPatterns,
 } from "./data/seedData.js";
+import { resolveProductDeepLink } from "./lib/deepLink.js";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
 import { SubmissionTab } from "./features/submission/SubmissionTab.jsx";
 import { ProfitTab } from "./features/profit/ProfitTab.jsx";
 
+const deepLink = resolveProductDeepLink(
+  initialProducts,
+  initialProjects,
+  typeof window !== "undefined" ? window.location.search : ""
+);
+
 // ---------- ルートアプリ ----------
 export default function App() {
-  const [series] = useState(initialSeries);
+  const [products] = useState(initialProducts);
   const [projects] = useState(initialProjects);
-  const [selectedId, setSelectedId] = useState(initialProjects[1].id); // 進行中の深海2026を初期表示
-  const [view, setView] = useState("dashboard");
+  const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
+  const [view, setView] = useState(deepLink?.view ?? "dashboard");
   const [sessions, setSessions] = useState(initialSessions);
   const [groups] = useState(initialGroups);
   const [lineItems, setLineItems] = useState(initialLineItems);
@@ -28,7 +35,7 @@ export default function App() {
   const [tab, setTab] = useState("quote");
 
   const project = projects.find((p) => p.id === selectedId);
-  const projectSeries = series.find((s) => s.id === project.seriesId);
+  const product = products.find((p) => p.id === project.productId);
   const tabs = [
     { id: "quote", label: "見積もり" },
     { id: "submission", label: "入稿管理" },
@@ -38,7 +45,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-stone-50 flex text-stone-800">
       <Sidebar
-        series={series}
+        products={products}
         projects={projects}
         selectedId={selectedId}
         view={view}
@@ -50,7 +57,7 @@ export default function App() {
       <main className="flex-1 p-6 max-w-4xl">
         {view === "dashboard" ? (
           <Dashboard
-            series={series}
+            products={products}
             projects={projects}
             sessions={sessions}
             lineItems={lineItems}
@@ -58,7 +65,7 @@ export default function App() {
           />
         ) : (
           <>
-            <p className="text-lg font-medium mb-1">{projectSeries.name}</p>
+            <p className="text-lg font-medium mb-1">{product.name}</p>
             <p className="text-sm text-stone-400 mb-4">{project.round}・印刷部数 {project.qty}部</p>
 
             <div className="flex gap-1 border-b border-stone-200 mb-4">

@@ -1,7 +1,7 @@
 import { projectStats } from "../../lib/projectStats.js";
 
 // ---------- ダッシュボード ----------
-export function Dashboard({ series, projects, sessions, lineItems, onOpen }) {
+export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
   const active = projects.filter((p) => p.status === "進行中");
   return (
     <div>
@@ -9,7 +9,7 @@ export function Dashboard({ series, projects, sessions, lineItems, onOpen }) {
       <p className="text-sm text-stone-400 mb-4">進行中の案件 {active.length}件</p>
       <div className="grid grid-cols-2 gap-3">
         {active.map((p) => {
-          const s = series.find((se) => se.id === p.seriesId);
+          const product = products.find((prod) => prod.id === p.productId);
           const stats = projectStats(p, sessions, lineItems);
           return (
             <button
@@ -17,7 +17,7 @@ export function Dashboard({ series, projects, sessions, lineItems, onOpen }) {
               onClick={() => onOpen(p.id)}
               className="text-left bg-white border border-stone-200 rounded-lg p-4 hover:border-emerald-400 transition"
             >
-              <p className="text-sm font-medium text-stone-800">{s.name}</p>
+              <p className="text-sm font-medium text-stone-800">{product.name}</p>
               <p className="text-xs text-stone-400 mb-3">{p.round}</p>
 
               {!stats.hasConfirmed ? (
