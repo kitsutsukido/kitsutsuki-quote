@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, ChevronRight, ChevronDown } from "lucide-react";
 
 // ---------- サイドバー(ジャンル > 商品 > 案件の3階層、既存/新規タブ) ----------
-export function Sidebar({ products, projects, setProjects, selectedId, view, setView, setSelectedId, onCreateNew }) {
+export function Sidebar({ products, projects, registerLot, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onCreateNew }) {
   const [sideTab, setSideTab] = useState("existing"); // existing | new
   const [lotFormProductId, setLotFormProductId] = useState(null);
   const [lotForm, setLotForm] = useState({ round: "", qty: "500" });
@@ -48,18 +48,9 @@ export function Sidebar({ products, projects, setProjects, selectedId, view, set
   const submitLotForm = (product) => {
     const round = lotForm.round.trim();
     if (!round) return;
-    const newProject = {
-      id: `prj-${Date.now()}`,
-      productId: product.id,
-      round,
-      qty: Number(lotForm.qty) || 0,
-      status: "進行中",
-    };
-    setProjects((prev) => [...prev, newProject]);
+    registerLot(product.id, round, lotForm.qty);
     setOpenProducts((prev) => new Set(prev).add(product.id));
     setLotFormProductId(null);
-    setSelectedId(newProject.id);
-    setView("project");
   };
 
   return (
@@ -110,11 +101,21 @@ export function Sidebar({ products, projects, setProjects, selectedId, view, set
                         <div key={prod.id} className="mb-1">
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={() => toggleProduct(prod.id)}
-                              className="flex-1 min-w-0 flex items-center justify-between px-2 py-1.5 text-sm text-[var(--text)] hover:bg-[var(--paper)] rounded-md"
+                              onClick={() => onOpenProduct(prod.id)}
+                              className={`flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md text-left ${
+                                view === "productOverview" && selectedProductId === prod.id
+                                  ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium"
+                                  : "text-[var(--text)] hover:bg-[var(--paper)]"
+                              }`}
                             >
-                              <span className="truncate">{prod.name}</span>
-                              {isProductOpen ? <ChevronDown size={14} className="shrink-0" /> : <ChevronRight size={14} className="shrink-0" />}
+                              <span className="truncate block">{prod.name}</span>
+                            </button>
+                            <button
+                              onClick={() => toggleProduct(prod.id)}
+                              title={isProductOpen ? "折りたたむ" : "展開する"}
+                              className="shrink-0 p-1 rounded-md text-[var(--text-muted)] hover:bg-[var(--paper)]"
+                            >
+                              {isProductOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                             </button>
                             <button
                               onClick={() => openLotForm(prod.id)}
