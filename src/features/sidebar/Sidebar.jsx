@@ -77,7 +77,7 @@ export function Sidebar({ products, projects, setProjects, selectedId, view, set
           onClick={() => setSideTab("existing")}
           className={`flex-1 text-xs py-1.5 rounded ${sideTab === "existing" ? "bg-[var(--card)] shadow-sm text-[var(--ink)] font-medium" : "text-[var(--text-muted)]"}`}
         >
-          既存の案件
+          既存の商品
         </button>
         <button
           onClick={() => setSideTab("new")}
