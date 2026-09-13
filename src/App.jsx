@@ -45,7 +45,7 @@ export default function App() {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header />
+      <Header setView={setView} />
 
       <div className="flex flex-1">
         <Sidebar
