@@ -25,7 +25,6 @@ export function RelatedApps() {
               {app.name}
               <ExternalLink size={12} className="text-[var(--text-muted)] shrink-0" />
             </p>
-            <p className="text-xs text-[var(--text-muted)] mt-1 truncate">{app.url}</p>
           </a>
         ))}
       </div>
