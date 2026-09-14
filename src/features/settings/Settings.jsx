@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X, Plus, Send, Download, ChevronRight, ChevronDown } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
+import { RelatedAppsSettings } from "../relatedApps/RelatedAppsSettings.jsx";
 
 const STORAGE_KEY = "zk-quote:settings";
 
@@ -147,6 +148,8 @@ export function Settings() {
           )}
         </div>
       </div>
+
+      <RelatedAppsSettings />
     </div>
   );
 }
