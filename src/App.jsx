@@ -13,6 +13,7 @@ import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { ProductOverview } from "./features/product/ProductOverview.jsx";
+import { Settings } from "./features/settings/Settings.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
 import { SubmissionTab } from "./features/submission/SubmissionTab.jsx";
 import { ProfitTab } from "./features/profit/ProfitTab.jsx";
@@ -66,7 +67,7 @@ export default function App() {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header setView={setView} />
+      <Header view={view} setView={setView} />
 
       <div className="flex flex-1">
         <Sidebar
@@ -104,6 +105,8 @@ export default function App() {
               registerLot={registerLot}
             />
           )}
+
+          {view === "settings" && <Settings />}
 
           {view === "project" && (
             <>
