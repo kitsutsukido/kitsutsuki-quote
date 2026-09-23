@@ -159,6 +159,8 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               groups={projectGroups}
               productId={project.productId}
               setGroups={setGroups}
+              lineItems={lineItems}
+              setLineItems={setLineItems}
               sessionId={activeSessionId}
               initial={editingItem}
               onCancel={() => setEditingItem(null)}
@@ -172,6 +174,8 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               groups={projectGroups}
               productId={project.productId}
               setGroups={setGroups}
+              lineItems={lineItems}
+              setLineItems={setLineItems}
               sessionId={activeSessionId}
               onCancel={() => setShowForm(false)}
               onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
