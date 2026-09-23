@@ -27,18 +27,39 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
     setGroupFormTarget("new");
   };
   const openEditGroupForm = (group) => {
-    setGroupForm({ name: group.name, color: group.color, hierarchy: "outer", parentId: "" });
+    setGroupForm({
+      name: group.name,
+      color: group.color,
+      hierarchy: group.parentId ? "sub" : "outer",
+      parentId: group.parentId || "",
+    });
     setGroupFormTarget(group.id);
   };
   const cancelGroupForm = () => setGroupFormTarget(null);
 
+  const availableParents = topGroups.filter((g) => g.id !== groupFormTarget);
+  const editingChildGroups = isEditingGroup ? groups.filter((g) => g.parentId === groupFormTarget) : [];
+
+  const selectSubHierarchy = () => {
+    if (editingChildGroups.length > 0) {
+      window.alert(
+        `このグループには小分けグループ(${editingChildGroups.map((g) => g.name).join("、")})があります。小分けに変更すると階層の整合性が崩れるため、先に中の小分けグループを別の場所に移すか削除してください。`
+      );
+      return;
+    }
+    if (availableParents.length === 0) return;
+    setGroupForm({ ...groupForm, hierarchy: "sub", parentId: groupForm.parentId || availableParents[0].id });
+  };
+
   const submitGroupForm = () => {
     const name = groupForm.name.trim();
     if (!name) return;
+    if (groupForm.hierarchy === "sub" && !groupForm.parentId) return;
     if (isEditingGroup) {
-      setGroups((prev) => prev.map((g) => (g.id === groupFormTarget ? { ...g, name, color: groupForm.color } : g)));
+      if (groupForm.hierarchy === "sub" && editingChildGroups.length > 0) return;
+      const parentId = groupForm.hierarchy === "sub" ? groupForm.parentId : null;
+      setGroups((prev) => prev.map((g) => (g.id === groupFormTarget ? { ...g, name, color: groupForm.color, parentId } : g)));
     } else {
-      if (groupForm.hierarchy === "sub" && !groupForm.parentId) return;
       const newGroup = {
         id: `grp-${Date.now()}`,
         productId,
@@ -167,34 +188,32 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
               ))}
             </div>
           </div>
-          {!isEditingGroup && (
-            <div>
-              <label className="text-xs text-[var(--text-muted)] block mb-1">階層</label>
-              <div className="flex flex-wrap gap-2">
-                <Chip active={groupForm.hierarchy === "outer"} onClick={() => setGroupForm({ ...groupForm, hierarchy: "outer" })}>
-                  新しい外側の梱包として追加
-                </Chip>
-                <Chip
-                  active={groupForm.hierarchy === "sub"}
-                  onClick={() => topGroups.length > 0 && setGroupForm({ ...groupForm, hierarchy: "sub", parentId: groupForm.parentId || topGroups[0].id })}
-                  colorClass={topGroups.length === 0 ? "border-[var(--border)] text-[var(--text-muted)] opacity-50 cursor-not-allowed" : undefined}
-                >
-                  既存の外側の梱包の中に小分けとして追加
-                </Chip>
-              </div>
-              {groupForm.hierarchy === "sub" && (
-                <select
-                  className={`${inputCls} mt-2`}
-                  value={groupForm.parentId}
-                  onChange={(e) => setGroupForm({ ...groupForm, parentId: e.target.value })}
-                >
-                  {topGroups.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
-                  ))}
-                </select>
-              )}
+          <div>
+            <label className="text-xs text-[var(--text-muted)] block mb-1">階層</label>
+            <div className="flex flex-wrap gap-2">
+              <Chip active={groupForm.hierarchy === "outer"} onClick={() => setGroupForm({ ...groupForm, hierarchy: "outer" })}>
+                {isEditingGroup ? "外側の梱包にする" : "新しい外側の梱包として追加"}
+              </Chip>
+              <Chip
+                active={groupForm.hierarchy === "sub"}
+                onClick={selectSubHierarchy}
+                colorClass={availableParents.length === 0 ? "border-[var(--border)] text-[var(--text-muted)] opacity-50 cursor-not-allowed" : undefined}
+              >
+                既存の外側の梱包の中に小分けとして追加
+              </Chip>
             </div>
-          )}
+            {groupForm.hierarchy === "sub" && (
+              <select
+                className={`${inputCls} mt-2`}
+                value={groupForm.parentId}
+                onChange={(e) => setGroupForm({ ...groupForm, parentId: e.target.value })}
+              >
+                {availableParents.map((g) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
           <div className="flex justify-between items-center">
             <div>
               {isEditingGroup && (
