@@ -32,7 +32,7 @@ export default function App() {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [view, setView] = useState(deepLink?.view ?? "dashboard");
   const [sessions, setSessions] = useState(initialSessions);
-  const [groups] = useState(initialGroups);
+  const [groups, setGroups] = useState(initialGroups);
   const [lineItems, setLineItems] = useState(initialLineItems);
   const [settings, setSettings] = useState(initialProfitSettings);
   const [patterns, setPatterns] = useState(initialPatterns);
@@ -128,7 +128,7 @@ export default function App() {
               </div>
 
               {tab === "quote" && (
-                <QuoteTab project={project} projects={projects} sessions={sessions} setSessions={setSessions} groups={groups} lineItems={lineItems} setLineItems={setLineItems} />
+                <QuoteTab project={project} projects={projects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
               )}
               {tab === "submission" && (
                 <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} />
