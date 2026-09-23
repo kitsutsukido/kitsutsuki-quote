@@ -38,3 +38,6 @@ export const saveProfitSettings = (value) => save("profitSettings", value);
 
 export const loadProfitPatterns = (fallback) => load("profitPatterns", fallback);
 export const saveProfitPatterns = (value) => save("profitPatterns", value);
+
+export const loadSheetUrlsByGenre = (fallback) => load("sheetUrlsByGenre", fallback);
+export const saveSheetUrlsByGenre = (value) => save("sheetUrlsByGenre", value);

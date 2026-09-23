@@ -124,7 +124,7 @@ export default function App() {
             />
           )}
 
-          {view === "settings" && <Settings />}
+          {view === "settings" && <Settings products={products} />}
 
           {view === "project" && (
             <>
