@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   initialProducts,
   initialProjects,
@@ -9,6 +9,14 @@ import {
   initialPatterns,
 } from "./data/seedData.js";
 import { resolveProductDeepLink } from "./lib/deepLink.js";
+import {
+  loadProjects, saveProjects,
+  loadSessions, saveSessions,
+  loadLineItems, saveLineItems,
+  loadGroups, saveGroups,
+  loadProfitSettings, saveProfitSettings,
+  loadProfitPatterns, saveProfitPatterns,
+} from "./lib/storage.js";
 import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
@@ -27,16 +35,23 @@ const deepLink = resolveProductDeepLink(
 // ---------- ルートアプリ ----------
 export default function App() {
   const [products] = useState(initialProducts);
-  const [projects, setProjects] = useState(initialProjects);
+  const [projects, setProjects] = useState(() => loadProjects(initialProjects));
   const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [view, setView] = useState(deepLink?.view ?? "dashboard");
-  const [sessions, setSessions] = useState(initialSessions);
-  const [groups, setGroups] = useState(initialGroups);
-  const [lineItems, setLineItems] = useState(initialLineItems);
-  const [settings, setSettings] = useState(initialProfitSettings);
-  const [patterns, setPatterns] = useState(initialPatterns);
+  const [sessions, setSessions] = useState(() => loadSessions(initialSessions));
+  const [groups, setGroups] = useState(() => loadGroups(initialGroups));
+  const [lineItems, setLineItems] = useState(() => loadLineItems(initialLineItems));
+  const [settings, setSettings] = useState(() => loadProfitSettings(initialProfitSettings));
+  const [patterns, setPatterns] = useState(() => loadProfitPatterns(initialPatterns));
   const [tab, setTab] = useState("quote");
+
+  useEffect(() => saveProjects(projects), [projects]);
+  useEffect(() => saveSessions(sessions), [sessions]);
+  useEffect(() => saveGroups(groups), [groups]);
+  useEffect(() => saveLineItems(lineItems), [lineItems]);
+  useEffect(() => saveProfitSettings(settings), [settings]);
+  useEffect(() => saveProfitPatterns(patterns), [patterns]);
 
   const project = projects.find((p) => p.id === selectedId);
   const product = products.find((p) => p.id === project.productId);
