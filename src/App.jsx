@@ -99,6 +99,9 @@ export default function App() {
               projects={projects}
               sessions={sessions}
               lineItems={lineItems}
+              setLineItems={setLineItems}
+              groups={groups}
+              setGroups={setGroups}
               settings={settings}
               patterns={patterns}
               onOpenProject={(id) => { setSelectedId(id); setView("project"); }}
