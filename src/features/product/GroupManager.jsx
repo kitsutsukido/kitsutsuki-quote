@@ -100,12 +100,15 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         autoFocus
       />
       {colorPicker(editDraft.color, (color) => setEditDraft({ ...editDraft, color }))}
-      <div className="flex gap-1">
-        <button onClick={() => saveEdit(g.id)} title="保存" className="p-1 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded">
-          <Check size={15} />
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => saveEdit(g.id)}
+          className="text-xs px-2.5 py-1 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1 font-medium"
+        >
+          <Check size={13} /> 保存
         </button>
-        <button onClick={cancelEdit} title="キャンセル" className="p-1 text-[var(--text-muted)] hover:bg-[var(--paper)] rounded">
-          <X size={15} />
+        <button onClick={cancelEdit} className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text)] rounded-md flex items-center gap-1">
+          <X size={13} /> キャンセル
         </button>
       </div>
     </div>
@@ -122,12 +125,15 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         autoFocus
       />
       {colorPicker(newDraft.color, (color) => setNewDraft({ ...newDraft, color }))}
-      <div className="flex gap-1">
-        <button onClick={() => submitAdd(parentId)} title="作成" className="p-1 text-[var(--accent)] hover:bg-[var(--accent-soft)] rounded">
-          <Check size={15} />
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => submitAdd(parentId)}
+          className="text-xs px-2.5 py-1 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1 font-medium"
+        >
+          <Check size={13} /> 作成
         </button>
-        <button onClick={cancelAdd} title="キャンセル" className="p-1 text-[var(--text-muted)] hover:bg-[var(--paper)] rounded">
-          <X size={15} />
+        <button onClick={cancelAdd} className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text)] rounded-md flex items-center gap-1">
+          <X size={13} /> キャンセル
         </button>
       </div>
     </div>
