@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, X, Pencil } from "lucide-react";
 import { GROUP_COLORS } from "../../lib/colors.js";
 import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
@@ -12,6 +12,9 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
   );
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [sessionLabelDraft, setSessionLabelDraft] = useState("");
+  const skipBlurSave = useRef(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
   const topGroups = projectGroups.filter((g) => !g.parentId);
@@ -66,6 +69,24 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
     setEditingItem(null);
   };
 
+  const startEditSession = (s) => {
+    setSessionLabelDraft(s.label);
+    setEditingSessionId(s.id);
+  };
+
+  const renameSession = (id) => {
+    const label = sessionLabelDraft.trim();
+    if (label) {
+      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, label } : s)));
+    }
+    setEditingSessionId(null);
+  };
+
+  const cancelEditSession = () => {
+    skipBlurSave.current = true;
+    setEditingSessionId(null);
+  };
+
   const row = (it) => (
     <tr key={it.id} className="border-b border-[var(--border)] last:border-0 group">
       <td className="py-1.5 pl-3 w-1/4">{it.name}</td>
@@ -93,9 +114,34 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                 : "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card)]"
             }`}
           >
-            <button onClick={() => setActiveSessionId(s.id)} className="flex items-center gap-1">
-              {s.label} <span className="text-xs text-[var(--text-muted)]">{s.date}</span>
-            </button>
+            {editingSessionId === s.id ? (
+              <input
+                autoFocus
+                value={sessionLabelDraft}
+                onChange={(e) => setSessionLabelDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") cancelEditSession();
+                }}
+                onBlur={() => {
+                  if (skipBlurSave.current) {
+                    skipBlurSave.current = false;
+                    return;
+                  }
+                  renameSession(s.id);
+                }}
+                className="text-sm bg-transparent border-b border-[var(--accent)] outline-none w-28"
+              />
+            ) : (
+              <button onClick={() => setActiveSessionId(s.id)} className="flex items-center gap-1">
+                {s.label} <span className="text-xs text-[var(--text-muted)]">{s.date}</span>
+              </button>
+            )}
+            {editingSessionId !== s.id && (
+              <button onClick={() => startEditSession(s)} title="タイトルを編集" className="text-[var(--text-muted)] hover:text-[var(--accent)] rounded p-0.5">
+                <Pencil size={12} />
+              </button>
+            )}
             <button onClick={() => deleteSession(s.id)} title="このセッションを削除" className="text-[var(--text-muted)] hover:text-[var(--danger)] rounded p-0.5">
               <X size={13} />
             </button>
