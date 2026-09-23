@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven } from "../../lib/breakeven.js";
+import { GroupManager } from "./GroupManager.jsx";
 
 // この商品の各案件のうち、確定見積もりを持つものの中から最新のものを探す
 function findLatestConfirmedLot(product, projects, sessions) {
@@ -18,7 +19,7 @@ function findLatestConfirmedLot(product, projects, sessions) {
 }
 
 // ---------- 商品サマリー画面 ----------
-export function ProductOverview({ product, projects, sessions, lineItems, settings, patterns, onOpenProject, registerLot }) {
+export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ round: "", qty: "500" });
 
@@ -123,6 +124,8 @@ export function ProductOverview({ product, projects, sessions, lineItems, settin
           </button>
         ))}
       </div>
+
+      <GroupManager productId={product.id} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
     </div>
   );
 }
