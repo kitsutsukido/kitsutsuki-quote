@@ -5,7 +5,7 @@ import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 
 // ---------- 見積もりタブ ----------
-export function QuoteTab({ project, projects, sessions, setSessions, groups, lineItems, setLineItems }) {
+export function QuoteTab({ project, projects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
   const projectSessions = sessions.filter((s) => s.projectId === project.id);
   const [activeSessionId, setActiveSessionId] = useState(
     projectSessions.find((s) => s.status === "確定")?.id || projectSessions[0]?.id
@@ -157,6 +157,8 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
           {editingItem && (
             <LineItemForm
               groups={projectGroups}
+              productId={project.productId}
+              setGroups={setGroups}
               sessionId={activeSessionId}
               initial={editingItem}
               onCancel={() => setEditingItem(null)}
@@ -168,6 +170,8 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, lin
           {!editingItem && (showForm ? (
             <LineItemForm
               groups={projectGroups}
+              productId={project.productId}
+              setGroups={setGroups}
               sessionId={activeSessionId}
               onCancel={() => setShowForm(false)}
               onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
