@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Plus, Trash2 } from "lucide-react";
+import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Chip } from "../../components/common/Chip.jsx";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -7,40 +7,73 @@ import { specString } from "../../lib/spec.js";
 import { createLineItem } from "../../data/seedData.js";
 import { GROUP_COLORS, COLOR_KEYS } from "../../lib/colors.js";
 
-const newGroupFormDefaults = { name: "", color: COLOR_KEYS[0], hierarchy: "outer", parentId: "" };
+const groupFormDefaults = { name: "", color: COLOR_KEYS[0], hierarchy: "outer", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
-export function LineItemForm({ groups, productId, setGroups, onCancel, onSave, onDelete, sessionId, initial }) {
+export function LineItemForm({ groups, productId, setGroups, lineItems, setLineItems, onCancel, onSave, onDelete, sessionId, initial }) {
   const [form, setForm] = useState(initial ? { ...initial } : createLineItem({ sessionId, groupId: groups[0]?.id || null }));
   const [processInput, setProcessInput] = useState("");
-  const [showNewGroupForm, setShowNewGroupForm] = useState(false);
-  const [newGroupForm, setNewGroupForm] = useState(newGroupFormDefaults);
+  const [groupFormTarget, setGroupFormTarget] = useState(null); // null=非表示 / "new"=新規追加 / それ以外=編集中のグループid
+  const [groupForm, setGroupForm] = useState(groupFormDefaults);
   const isEdit = !!initial;
+  const isEditingGroup = groupFormTarget && groupFormTarget !== "new";
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const topGroups = groups.filter((g) => !g.parentId);
 
   const openNewGroupForm = () => {
-    setNewGroupForm(newGroupFormDefaults);
-    setShowNewGroupForm(true);
+    setGroupForm(groupFormDefaults);
+    setGroupFormTarget("new");
   };
-  const cancelNewGroupForm = () => setShowNewGroupForm(false);
+  const openEditGroupForm = (group) => {
+    setGroupForm({ name: group.name, color: group.color, hierarchy: "outer", parentId: "" });
+    setGroupFormTarget(group.id);
+  };
+  const cancelGroupForm = () => setGroupFormTarget(null);
 
-  const submitNewGroup = () => {
-    const name = newGroupForm.name.trim();
+  const submitGroupForm = () => {
+    const name = groupForm.name.trim();
     if (!name) return;
-    if (newGroupForm.hierarchy === "sub" && !newGroupForm.parentId) return;
-    const newGroup = {
-      id: `grp-${Date.now()}`,
-      productId,
-      name,
-      parentId: newGroupForm.hierarchy === "sub" ? newGroupForm.parentId : null,
-      color: newGroupForm.color,
-    };
-    setGroups((prev) => [...prev, newGroup]);
-    setForm({ ...form, groupId: newGroup.id });
-    setShowNewGroupForm(false);
+    if (isEditingGroup) {
+      setGroups((prev) => prev.map((g) => (g.id === groupFormTarget ? { ...g, name, color: groupForm.color } : g)));
+    } else {
+      if (groupForm.hierarchy === "sub" && !groupForm.parentId) return;
+      const newGroup = {
+        id: `grp-${Date.now()}`,
+        productId,
+        name,
+        parentId: groupForm.hierarchy === "sub" ? groupForm.parentId : null,
+        color: groupForm.color,
+      };
+      setGroups((prev) => [...prev, newGroup]);
+      setForm({ ...form, groupId: newGroup.id });
+    }
+    setGroupFormTarget(null);
+  };
+
+  const deleteGroup = () => {
+    const group = groups.find((g) => g.id === groupFormTarget);
+    if (!group) return;
+    const childGroups = groups.filter((g) => g.parentId === group.id);
+    const idsToDelete = [group.id, ...childGroups.map((g) => g.id)];
+    const affectedCount = lineItems.filter((it) => idsToDelete.includes(it.groupId)).length;
+
+    let message = `「${group.name}」を削除しますか？`;
+    if (childGroups.length > 0) {
+      message += `\nこの中の小分け梱包(${childGroups.map((g) => g.name).join("、")})も一緒に削除されます。`;
+    }
+    if (affectedCount > 0) {
+      message += `\n${affectedCount}件の明細がこのグループを使っています。削除するとそれらの明細はグループなしになります。`;
+    }
+    if (!window.confirm(message)) return;
+
+    setGroups((prev) => prev.filter((g) => !idsToDelete.includes(g.id)));
+    setLineItems((prev) => prev.map((it) => (idsToDelete.includes(it.groupId) ? { ...it, groupId: null } : it)));
+    if (idsToDelete.includes(form.groupId)) {
+      setForm({ ...form, groupId: null });
+    }
+    setGroupFormTarget(null);
   };
 
   const addProcess = () => {
@@ -58,11 +91,39 @@ export function LineItemForm({ groups, productId, setGroups, onCancel, onSave, o
       <div className="grid grid-cols-2 gap-3">
         <Field label="梱包グループ">
           <div className="flex flex-wrap gap-2">
-            {groups.map((g) => (
-              <Chip key={g.id} active={form.groupId === g.id} onClick={() => setForm({ ...form, groupId: g.id })}>
-                {g.name}
-              </Chip>
-            ))}
+            {groups.map((g) => {
+              const active = form.groupId === g.id;
+              return (
+                <div
+                  key={g.id}
+                  className={`flex items-stretch rounded-md border overflow-hidden ${
+                    active ? "border-[var(--accent)]" : "border-[var(--border)]"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, groupId: g.id })}
+                    className={`text-sm pl-3 pr-2 py-1.5 ${
+                      active ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "text-[var(--text)] hover:bg-[var(--paper)]"
+                    }`}
+                  >
+                    {g.name}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditGroupForm(g)}
+                    title="グループを編集"
+                    className={`px-1.5 border-l ${
+                      active
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                        : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--paper)]"
+                    }`}
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </div>
+              );
+            })}
             <button
               type="button"
               onClick={openNewGroupForm}
@@ -77,15 +138,15 @@ export function LineItemForm({ groups, productId, setGroups, onCancel, onSave, o
         </Field>
       </div>
 
-      {showNewGroupForm && (
+      {groupFormTarget && (
         <div className="border border-[var(--border)] rounded-md p-3 space-y-3">
-          <p className="text-xs text-[var(--text-muted)]">梱包グループを新規作成</p>
+          <p className="text-xs text-[var(--text-muted)]">{isEditingGroup ? "梱包グループを編集" : "梱包グループを新規作成"}</p>
           <Field label="グループ名">
             <input
               className={inputCls}
               placeholder="例：チケット袋"
-              value={newGroupForm.name}
-              onChange={(e) => setNewGroupForm({ ...newGroupForm, name: e.target.value })}
+              value={groupForm.name}
+              onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
               autoFocus
             />
           </Field>
@@ -96,9 +157,9 @@ export function LineItemForm({ groups, productId, setGroups, onCancel, onSave, o
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setNewGroupForm({ ...newGroupForm, color: key })}
+                  onClick={() => setGroupForm({ ...groupForm, color: key })}
                   className={`text-xs px-3 py-1 rounded-md border ${GROUP_COLORS[key].chip} ${
-                    newGroupForm.color === key ? "ring-2 ring-[var(--accent)]" : ""
+                    groupForm.color === key ? "ring-2 ring-[var(--accent)]" : ""
                   }`}
                 >
                   {key}
@@ -106,39 +167,50 @@ export function LineItemForm({ groups, productId, setGroups, onCancel, onSave, o
               ))}
             </div>
           </div>
-          <div>
-            <label className="text-xs text-[var(--text-muted)] block mb-1">階層</label>
-            <div className="flex flex-wrap gap-2">
-              <Chip active={newGroupForm.hierarchy === "outer"} onClick={() => setNewGroupForm({ ...newGroupForm, hierarchy: "outer" })}>
-                新しい外側の梱包として追加
-              </Chip>
-              <Chip
-                active={newGroupForm.hierarchy === "sub"}
-                onClick={() => topGroups.length > 0 && setNewGroupForm({ ...newGroupForm, hierarchy: "sub", parentId: newGroupForm.parentId || topGroups[0].id })}
-                colorClass={topGroups.length === 0 ? "border-[var(--border)] text-[var(--text-muted)] opacity-50 cursor-not-allowed" : undefined}
-              >
-                既存の外側の梱包の中に小分けとして追加
-              </Chip>
+          {!isEditingGroup && (
+            <div>
+              <label className="text-xs text-[var(--text-muted)] block mb-1">階層</label>
+              <div className="flex flex-wrap gap-2">
+                <Chip active={groupForm.hierarchy === "outer"} onClick={() => setGroupForm({ ...groupForm, hierarchy: "outer" })}>
+                  新しい外側の梱包として追加
+                </Chip>
+                <Chip
+                  active={groupForm.hierarchy === "sub"}
+                  onClick={() => topGroups.length > 0 && setGroupForm({ ...groupForm, hierarchy: "sub", parentId: groupForm.parentId || topGroups[0].id })}
+                  colorClass={topGroups.length === 0 ? "border-[var(--border)] text-[var(--text-muted)] opacity-50 cursor-not-allowed" : undefined}
+                >
+                  既存の外側の梱包の中に小分けとして追加
+                </Chip>
+              </div>
+              {groupForm.hierarchy === "sub" && (
+                <select
+                  className={`${inputCls} mt-2`}
+                  value={groupForm.parentId}
+                  onChange={(e) => setGroupForm({ ...groupForm, parentId: e.target.value })}
+                >
+                  {topGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
-            {newGroupForm.hierarchy === "sub" && (
-              <select
-                className={`${inputCls} mt-2`}
-                value={newGroupForm.parentId}
-                onChange={(e) => setNewGroupForm({ ...newGroupForm, parentId: e.target.value })}
-              >
-                {topGroups.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            )}
-          </div>
-          <div className="flex justify-end gap-2">
-            <button onClick={cancelNewGroupForm} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">
-              キャンセル
-            </button>
-            <button onClick={submitNewGroup} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">
-              作成
-            </button>
+          )}
+          <div className="flex justify-between items-center">
+            <div>
+              {isEditingGroup && (
+                <button onClick={deleteGroup} className="text-sm px-3 py-1.5 border border-[var(--danger)] text-[var(--danger)] rounded-md flex items-center gap-1">
+                  <Trash2 size={14} /> このグループを削除
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={cancelGroupForm} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">
+                キャンセル
+              </button>
+              <button onClick={submitGroupForm} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">
+                {isEditingGroup ? "保存" : "作成"}
+              </button>
+            </div>
           </div>
         </div>
       )}
