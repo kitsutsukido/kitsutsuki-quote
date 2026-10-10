@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Plus, X, Pencil } from "lucide-react";
-import { GROUP_COLORS } from "../../lib/colors.js";
+import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
@@ -175,7 +175,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                   </div>
                 );
               }
-              const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
+              const c = GROUP_COLORS[colorForDepth(depth)];
               return (
                 <div key={group.id} className="mb-2 last:mb-0 ml-2">
                   <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>

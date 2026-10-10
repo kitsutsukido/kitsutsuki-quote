@@ -4,10 +4,9 @@ import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { specString } from "../../lib/spec.js";
 import { createLineItem } from "../../data/seedData.js";
-import { GROUP_COLORS, COLOR_KEYS } from "../../lib/colors.js";
 import { flattenGroupTree, groupPathLabel, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
-const groupFormDefaults = { name: "", color: COLOR_KEYS[0], parentId: "" };
+const groupFormDefaults = { name: "", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
 export function LineItemForm({ groups, productId, setGroups, lineItems, setLineItems, onCancel, onSave, onDelete, sessionId, initial }) {
@@ -27,7 +26,6 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
   const openEditGroupForm = (group) => {
     setGroupForm({
       name: group.name,
-      color: group.color,
       parentId: group.parentId || "",
     });
     setGroupFormTarget(group.id);
@@ -41,9 +39,9 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
     if (!name) return;
     const parentId = groupForm.parentId || null;
     if (isEditingGroup) {
-      setGroups((prev) => prev.map((g) => (g.id === groupFormTarget ? { ...g, name, color: groupForm.color, parentId } : g)));
+      setGroups((prev) => prev.map((g) => (g.id === groupFormTarget ? { ...g, name, parentId } : g)));
     } else {
-      const newGroup = { id: `grp-${Date.now()}`, productId, name, parentId, color: groupForm.color };
+      const newGroup = { id: `grp-${Date.now()}`, productId, name, parentId };
       setGroups((prev) => [...prev, newGroup]);
       setForm({ ...form, groupId: newGroup.id });
     }
@@ -148,23 +146,6 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
               autoFocus
             />
           </Field>
-          <div>
-            <label className="text-xs text-[var(--text-muted)] block mb-1">色</label>
-            <div className="flex flex-wrap gap-2">
-              {COLOR_KEYS.map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setGroupForm({ ...groupForm, color: key })}
-                  className={`text-xs px-3 py-1 rounded-md border ${GROUP_COLORS[key].chip} ${
-                    groupForm.color === key ? "ring-2 ring-[var(--accent)]" : ""
-                  }`}
-                >
-                  {key}
-                </button>
-              ))}
-            </div>
-          </div>
           <Field label="入れる先(親グループ)">
             <select
               className={inputCls}

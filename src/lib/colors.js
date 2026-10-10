@@ -8,3 +8,8 @@ export const GROUP_COLORS = {
 };
 
 export const COLOR_KEYS = Object.keys(GROUP_COLORS);
+
+// 梱包グループの色は階層の深さで決まる(同じ階層は同じ色)。保存はせず表示のたびに計算するので、移動すれば色も変わる
+export function colorForDepth(depth) {
+  return COLOR_KEYS[depth % COLOR_KEYS.length];
+}
