@@ -8,7 +8,7 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
     <div>
       <p className="text-lg font-medium mb-1 text-[var(--ink)]">ダッシュボード</p>
       <p className="text-sm text-[var(--text-muted)] mb-4">進行中の案件 {active.length}件</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {active.map((p) => {
           const product = products.find((prod) => prod.id === p.productId);
           const stats = projectStats(p, sessions, lineItems);
