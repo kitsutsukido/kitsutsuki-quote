@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Plus, X, Pencil } from "lucide-react";
 import { GROUP_COLORS } from "../../lib/colors.js";
+import { buildGroupTree } from "../../lib/groupTree.js";
 import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 
@@ -17,22 +18,19 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
   const skipBlurSave = useRef(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
-  const topGroups = projectGroups.filter((g) => !g.parentId);
   const items = lineItems.filter((it) => it.sessionId === activeSessionId);
   const total = items.reduce((s, it) => s + it.amount, 0);
 
-  const nested = topGroups
-    .map((outer) => {
-      const directItems = items.filter((it) => it.groupId === outer.id);
-      const subGroups = projectGroups
-        .filter((g) => g.parentId === outer.id)
-        .map((sub) => ({ group: sub, items: items.filter((it) => it.groupId === sub.id) }))
-        .filter((x) => x.items.length);
-      const subtotal = directItems.reduce((s, it) => s + it.amount, 0) + subGroups.reduce((s, x) => s + x.items.reduce((s2, it) => s2 + it.amount, 0), 0);
-      const count = directItems.length + subGroups.reduce((s, x) => s + x.items.length, 0);
-      return { outer, directItems, subGroups, subtotal, count };
-    })
-    .filter((x) => x.count > 0);
+  // グループの木に、このセッションの明細を割り当てる(小計・点数は配下すべてを含む)。明細のない枝は表示しない
+  const attachItems = (node) => {
+    const children = node.children.map(attachItems).filter(Boolean);
+    const directItems = items.filter((it) => it.groupId === node.group.id);
+    const count = directItems.length + children.reduce((s, c) => s + c.count, 0);
+    if (count === 0) return null;
+    const subtotal = directItems.reduce((s, it) => s + it.amount, 0) + children.reduce((s, c) => s + c.subtotal, 0);
+    return { group: node.group, depth: node.depth, directItems, children, count, subtotal };
+  };
+  const nested = buildGroupTree(projectGroups).map(attachItems).filter(Boolean);
 
   const ungrouped = items.filter((it) => !it.groupId);
 
@@ -159,33 +157,37 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
       ) : (
         <>
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
-            {nested.map(({ outer, directItems, subGroups, subtotal, count }) => {
+            {nested.map(function renderNode(node) {
+              const { group, depth, directItems, children, count, subtotal } = node;
+              if (depth === 0) {
+                return (
+                  <div key={group.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-[var(--ink)]">{group.name}{children.length > 0 && <span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span>}</span>
+                      <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
+                    </div>
+                    {directItems.length > 0 && (
+                      <table className="w-full text-sm mb-2">
+                        <tbody>{directItems.map(row)}</tbody>
+                      </table>
+                    )}
+                    {children.map(renderNode)}
+                  </div>
+                );
+              }
+              const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
               return (
-                <div key={outer.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-[var(--ink)]">{outer.name}<span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span></span>
+                <div key={group.id} className="mb-2 last:mb-0 ml-2">
+                  <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
+                    <span className="text-sm font-medium">{group.name}</span>
                     <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
                   </div>
                   {directItems.length > 0 && (
-                    <table className="w-full text-sm mb-2">
+                    <table className="w-full text-sm mt-1">
                       <tbody>{directItems.map(row)}</tbody>
                     </table>
                   )}
-                  {subGroups.map(({ group, items: subItems }) => {
-                    const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
-                    const subSubtotal = subItems.reduce((s, it) => s + it.amount, 0);
-                    return (
-                      <div key={group.id} className="mb-2 last:mb-0 ml-2">
-                        <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
-                          <span className="text-sm font-medium">{group.name}</span>
-                          <span className="text-xs text-[var(--text-muted)] font-mono">{subItems.length}点・{subSubtotal.toLocaleString()}円</span>
-                        </div>
-                        <table className="w-full text-sm mt-1">
-                          <tbody>{subItems.map(row)}</tbody>
-                        </table>
-                      </div>
-                    );
-                  })}
+                  {children.length > 0 && <div className="mt-1.5">{children.map(renderNode)}</div>}
                 </div>
               );
             })}
