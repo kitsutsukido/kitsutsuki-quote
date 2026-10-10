@@ -35,16 +35,15 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
 
   const ungrouped = items.filter((it) => !it.groupId);
 
-  // この商品でこれまでに確定見積もりが一度でもあれば、以降は仮を経ずにいきなり確定になる
-  const productProjectIds = projects.filter((p) => p.productId === project.productId).map((p) => p.id);
-  const productHasConfirmedBefore = sessions.some((s) => productProjectIds.includes(s.projectId) && s.status === "確定");
-  const isReprint = productHasConfirmedBefore;
-
-  const addSession = () => {
+  const addSession = (status) => {
     const id = `qs-${Date.now()}`;
-    const status = isReprint ? "確定" : "仮";
-    const kariCount = projectSessions.filter((s) => s.status === "仮").length;
-    const label = isReprint ? "確定見積もり" : `仮見積もり${"①②③④⑤⑥⑦⑧⑨".slice(kariCount, kariCount + 1)}`;
+    const circled = "①②③④⑤⑥⑦⑧⑨";
+    const count = projectSessions.filter((s) => s.status === status).length;
+    const mark = count < circled.length ? circled[count] : `(${count + 1})`;
+    const label =
+      status === "確定"
+        ? count === 0 ? "確定見積もり" : `確定見積もり${mark}`
+        : `仮見積もり${mark}`;
     const newSession = { id, projectId: project.id, label, date: new Date().toISOString().slice(0, 10), status };
     setSessions((prev) => [...prev, newSession]);
     setActiveSessionId(id);
@@ -146,14 +145,17 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
             </button>
           </div>
         ))}
-        <button onClick={addSession} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]" title={isReprint ? "増刷のため、仮を経ずにそのまま確定見積もりとして追加されます" : "初回のため、まず仮見積もりとして追加されます"}>
-          <Plus size={14} /> {isReprint ? "増刷の見積もりを確定で追加" : "仮見積もりを追加"}
+        <button onClick={() => addSession("仮")} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
+          <Plus size={14} /> 仮見積もりを追加
+        </button>
+        <button onClick={() => addSession("確定")} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
+          <Plus size={14} /> 確定見積もりを追加
         </button>
       </div>
 
       {!activeSessionId ? (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 text-center text-sm text-[var(--text-muted)]">
-          セッションがまだありません。上の「{isReprint ? "増刷の見積もりを確定で追加" : "仮見積もりを追加"}」ボタンから作成してください。
+          セッションがまだありません。上の「仮見積もりを追加」「確定見積もりを追加」ボタンから作成してください。
         </div>
       ) : (
         <>
