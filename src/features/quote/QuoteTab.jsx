@@ -4,6 +4,7 @@ import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
+import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
 export function QuoteTab({ project, projects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
@@ -159,36 +160,35 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
             {nested.map(function renderNode(node) {
               const { group, depth, directItems, children, count, subtotal } = node;
-              if (depth === 0) {
-                return (
-                  <div key={group.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-[var(--ink)]">{group.name}{children.length > 0 && <span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span>}</span>
-                      <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
-                    </div>
-                    {directItems.length > 0 && (
-                      <table className="w-full text-sm mb-2">
-                        <tbody>{directItems.map(row)}</tbody>
-                      </table>
-                    )}
-                    {children.map(renderNode)}
-                  </div>
-                );
-              }
               const c = GROUP_COLORS[colorForDepth(depth)];
-              return (
-                <div key={group.id} className="mb-2 last:mb-0 ml-2">
-                  <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
-                    <span className="text-sm font-medium">{group.name}</span>
-                    <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
-                  </div>
+              const header = depth === 0 ? (
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm font-medium text-[var(--ink)]">{group.name}{children.length > 0 && <span className="text-xs text-[var(--text-muted)] font-normal ml-1">(外側の梱包・まとめて1袋)</span>}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
+                </div>
+              ) : (
+                <div className={`border-l-4 rounded-r-md px-3 py-1.5 flex justify-between items-center ${c.bar}`}>
+                  <span className="text-sm font-medium">{group.name}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{count}点・{subtotal.toLocaleString()}円</span>
+                </div>
+              );
+              const body = (
+                <>
+                  {header}
                   {directItems.length > 0 && (
-                    <table className="w-full text-sm mt-1">
+                    <table className="w-full text-sm">
                       <tbody>{directItems.map(row)}</tbody>
                     </table>
                   )}
-                  {children.length > 0 && <div className="mt-1.5">{children.map(renderNode)}</div>}
-                </div>
+                  {children.length > 0 && (
+                    <div className="mt-2 ml-3 pl-3 border-l-2 border-[var(--border)] space-y-2">{children.map(renderNode)}</div>
+                  )}
+                </>
+              );
+              return depth === 0 ? (
+                <div key={group.id} className="mb-4 last:mb-0 border border-[var(--border)] rounded-lg p-3">{body}</div>
+              ) : (
+                <div key={group.id}>{body}</div>
               );
             })}
             {ungrouped.length > 0 && (
@@ -203,7 +203,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
           </div>
 
           {editingItem && (
-            <LineItemForm
+            <Modal><LineItemForm
               groups={projectGroups}
               productId={project.productId}
               setGroups={setGroups}
@@ -214,11 +214,11 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               onCancel={() => setEditingItem(null)}
               onDelete={deleteItem}
               onSave={(item) => { setLineItems((prev) => prev.map((li2) => (li2.id === item.id ? item : li2))); setEditingItem(null); }}
-            />
+            /></Modal>
           )}
 
           {!editingItem && (showForm ? (
-            <LineItemForm
+            <Modal><LineItemForm
               groups={projectGroups}
               productId={project.productId}
               setGroups={setGroups}
@@ -227,7 +227,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               sessionId={activeSessionId}
               onCancel={() => setShowForm(false)}
               onSave={(item) => { setLineItems((prev) => [...prev, item]); setShowForm(false); }}
-            />
+            /></Modal>
           ) : (
             <button onClick={() => setShowForm(true)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
               <Plus size={14} /> 明細を追加
