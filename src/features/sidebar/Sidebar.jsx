@@ -38,7 +38,7 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
   });
 
   return (
-    <aside className="w-64 border-r border-[var(--border)] bg-[var(--card)] p-3">
+    <aside className="w-64 min-h-full border-r border-[var(--border)] bg-[var(--card)] p-3">
       <button
         onClick={() => setView("dashboard")}
         className={`w-full text-left text-sm px-2 py-2 rounded-md mb-2 ${

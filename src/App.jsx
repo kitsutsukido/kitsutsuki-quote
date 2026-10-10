@@ -45,6 +45,7 @@ export default function App() {
   const [settings, setSettings] = useState(() => loadProfitSettings(initialProfitSettings));
   const [patterns, setPatterns] = useState(() => loadProfitPatterns(initialPatterns));
   const [tab, setTab] = useState("quote");
+  const [menuOpen, setMenuOpen] = useState(false); // スマホ幅でのサイドバー開閉
 
   useEffect(() => saveProjects(projects), [projects]);
   useEffect(() => saveSessions(sessions), [sessions]);
@@ -82,22 +83,25 @@ export default function App() {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header view={view} setView={setView} />
+      <Header view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
 
       <div className="flex flex-1">
-        <Sidebar
-          products={products}
-          projects={projects}
-          selectedId={selectedId}
-          selectedProductId={selectedProductId}
-          view={view}
-          setView={setView}
-          setSelectedId={setSelectedId}
-          onOpenProduct={openProductOverview}
-          onCreateNew={() => {}}
-        />
+        {menuOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setMenuOpen(false)} />}
+        <div className={`${menuOpen ? "fixed inset-y-0 left-0 z-40 overflow-y-auto" : "hidden"} md:block md:static md:z-auto md:overflow-visible shrink-0`}>
+          <Sidebar
+            products={products}
+            projects={projects}
+            selectedId={selectedId}
+            selectedProductId={selectedProductId}
+            view={view}
+            setView={(v) => { setView(v); setMenuOpen(false); }}
+            setSelectedId={(id) => { setSelectedId(id); setMenuOpen(false); }}
+            onOpenProduct={(id) => { openProductOverview(id); setMenuOpen(false); }}
+            onCreateNew={() => {}}
+          />
+        </div>
 
-        <main className="flex-1 p-6 max-w-4xl">
+        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-4xl">
           {view === "dashboard" && (
             <Dashboard
               products={products}
