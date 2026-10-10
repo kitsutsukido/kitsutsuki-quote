@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { GROUP_COLORS, COLOR_KEYS } from "../../lib/colors.js";
+import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
 // ---------- 梱包グループ管理(商品サマリー画面) ----------
@@ -10,20 +10,20 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
   const tree = buildGroupTree(productGroups);
 
   const [editingId, setEditingId] = useState(null);
-  const [editDraft, setEditDraft] = useState({ name: "", color: COLOR_KEYS[0] });
+  const [editDraft, setEditDraft] = useState({ name: "" });
   const [addingParent, setAddingParent] = useState(undefined); // undefined=非表示 / null=最上位に追加 / id=そのグループの中に追加
-  const [newDraft, setNewDraft] = useState({ name: "", color: COLOR_KEYS[0] });
+  const [newDraft, setNewDraft] = useState({ name: "" });
 
   const startEdit = (g) => {
     setAddingParent(undefined);
     setEditingId(g.id);
-    setEditDraft({ name: g.name, color: g.color });
+    setEditDraft({ name: g.name });
   };
   const cancelEdit = () => setEditingId(null);
   const saveEdit = (id) => {
     const name = editDraft.name.trim();
     if (!name) return;
-    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, name, color: editDraft.color } : g)));
+    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, name } : g)));
     setEditingId(null);
   };
 
@@ -52,7 +52,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
 
   const startAdd = (parentId) => {
     setEditingId(null);
-    setNewDraft({ name: "", color: COLOR_KEYS[0] });
+    setNewDraft({ name: "" });
     setAddingParent(parentId);
   };
   const cancelAdd = () => setAddingParent(undefined);
@@ -60,24 +60,9 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
   const submitAdd = (parentId) => {
     const name = newDraft.name.trim();
     if (!name) return;
-    setGroups((prev) => [...prev, { id: `grp-${Date.now()}`, productId, name, parentId, color: newDraft.color }]);
+    setGroups((prev) => [...prev, { id: `grp-${Date.now()}`, productId, name, parentId }]);
     setAddingParent(undefined);
   };
-
-  const colorPicker = (value, onChange) => (
-    <div className="flex flex-wrap gap-1.5">
-      {COLOR_KEYS.map((key) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onChange(key)}
-          className={`text-xs px-2 py-0.5 rounded-md border ${GROUP_COLORS[key].chip} ${value === key ? "ring-2 ring-[var(--accent)]" : ""}`}
-        >
-          {key}
-        </button>
-      ))}
-    </div>
-  );
 
   const renderEditRow = (g) => (
     <div className="flex-1 flex flex-wrap items-center gap-2">
@@ -87,7 +72,6 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         onChange={(e) => setEditDraft({ ...editDraft, name: e.target.value })}
         autoFocus
       />
-      {colorPicker(editDraft.color, (color) => setEditDraft({ ...editDraft, color }))}
       <div className="flex gap-1.5">
         <button
           onClick={() => saveEdit(g.id)}
@@ -112,7 +96,6 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         onKeyDown={(e) => { if (e.key === "Enter") submitAdd(parentId); }}
         autoFocus
       />
-      {colorPicker(newDraft.color, (color) => setNewDraft({ ...newDraft, color }))}
       <div className="flex gap-1.5">
         <button
           onClick={() => submitAdd(parentId)}
@@ -128,7 +111,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
   );
 
   const renderNode = ({ group, depth, children }) => {
-    const c = GROUP_COLORS[group.color] || GROUP_COLORS.emerald;
+    const c = GROUP_COLORS[colorForDepth(depth)];
     const parentOptions = selectableParents(productGroups, group.id);
     const row = (
       <div className="flex flex-wrap items-center gap-2">
