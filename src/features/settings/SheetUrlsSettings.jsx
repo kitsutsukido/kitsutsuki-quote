@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { Send, Download } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { loadSheetUrlsByGenre, saveSheetUrlsByGenre } from "../../lib/storage.js";
+import {
+  loadSheetUrlsByGenre,
+  saveSheetUrlsByGenre,
+  loadSecretsByGenre,
+  saveSecretsByGenre,
+} from "../../lib/storage.js";
 
 // ---------- シリーズ(genre)ごとのApps Script Web アプリ URL ----------
 export function SheetUrlsSettings({ products }) {
@@ -16,6 +21,14 @@ export function SheetUrlsSettings({ products }) {
   useEffect(() => {
     saveSheetUrlsByGenre(urlsByGenre);
   }, [urlsByGenre]);
+
+  const [secretsByGenre, setSecretsByGenre] = useState(() => loadSecretsByGenre({}));
+
+  useEffect(() => {
+    saveSecretsByGenre(secretsByGenre);
+  }, [secretsByGenre]);
+
+  const setSecret = (genre, secret) => setSecretsByGenre((prev) => ({ ...prev, [genre]: secret }));
 
   const setUrl = (genre, url) => setUrlsByGenre((prev) => ({ ...prev, [genre]: url }));
 
@@ -43,6 +56,16 @@ export function SheetUrlsSettings({ products }) {
                   placeholder="https://script.google.com/macros/s/xxxxx/exec"
                   value={urlsByGenre[genre] || ""}
                   onChange={(e) => setUrl(genre, e.target.value)}
+                />
+              </Field>
+              <Field label="合言葉(Apps Script側のSHARED_SECRETと同じ文字列)">
+                <input
+                  type="password"
+                  autoComplete="off"
+                  className={inputCls}
+                  placeholder="未設定の場合は認証なし"
+                  value={secretsByGenre[genre] || ""}
+                  onChange={(e) => setSecret(genre, e.target.value)}
                 />
               </Field>
               <div className="flex flex-wrap gap-2">

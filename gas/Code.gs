@@ -18,7 +18,25 @@
  * 6. 「アクセスできるユーザー」を「全員」に設定してデプロイ
  *    (これは在庫アプリのデプロイとは別の、新規のデプロイになる)
  * 7. 発行された「ウェブアプリのURL」を見積もりアプリ側の設定に使う
+ *
+ * 合言葉: 上の SHARED_SECRET に推測されにくい文字列を設定してからデプロイし、
+ * 同じ文字列を見積もりアプリの設定画面の「合言葉」欄にも入れる(設定を変えたら再デプロイ)。
  */
+
+// 合言葉(共有シークレット)。ウェブアプリのURLが漏れても、この合言葉を知らない
+// 相手からのリクエストは拒否する。デプロイ前に必ず推測されにくい文字列へ書き換え、
+// 見積もりアプリの「設定・連携」画面の同じシリーズの「合言葉」欄に同じ文字列を入れること。
+// 空文字のままだとチェックを行わない(誰でもアクセス可能になるので非推奨)。
+const SHARED_SECRET = "";
+
+function isAuthorized_(secret) {
+  if (!SHARED_SECRET) return true;
+  return String(secret || "") === SHARED_SECRET;
+}
+
+function unauthorized_() {
+  return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "unauthorized" })).setMimeType(ContentService.MimeType.JSON);
+}
 
 const SHEETS = {
   projects: "商品案件",
@@ -130,6 +148,7 @@ function profitSettingsFromRows_(rows) {
 
 function doPost(e) {
   const body = JSON.parse(e.postData.contents);
+  if (!isAuthorized_(body.secret)) return unauthorized_();
   if (body.type === "full-sync") {
     // フロント側が一部のフィールドだけ送ってくることもあるため、
     // 存在するフィールドだけを書き込む(未送信の項目は上書きしない)。
@@ -146,6 +165,7 @@ function doPost(e) {
 }
 
 function doGet(e) {
+  if (!isAuthorized_(e && e.parameter && e.parameter.secret)) return unauthorized_();
   const data = {
     projects: readSheetAsArray_(SHEETS.projects),
     sessions: readSheetAsArray_(SHEETS.sessions),
