@@ -4,7 +4,7 @@ import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { specString } from "../../lib/spec.js";
 import { createLineItem } from "../../data/seedData.js";
-import { flattenGroupTree, groupPathLabel, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
+import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
 const groupFormDefaults = { name: "", parentId: "" };
 
@@ -84,46 +84,36 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
     <div className="border border-[var(--border)] rounded-lg p-4 bg-[var(--card)] space-y-4">
       <p className="text-sm font-medium text-[var(--ink)]">{isEdit ? "明細を編集" : "明細を追加"}</p>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="梱包グループ">
-          <div className="flex flex-wrap gap-2">
-            {flattenGroupTree(groups).map(({ group: g }) => {
-              const active = form.groupId === g.id;
-              return (
-                <div
-                  key={g.id}
-                  className={`flex items-stretch rounded-md border overflow-hidden ${
-                    active ? "border-[var(--accent)]" : "border-[var(--border)]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, groupId: g.id })}
-                    className={`text-sm pl-3 pr-2 py-1.5 ${
-                      active ? "bg-[var(--accent-soft)] text-[var(--accent)]" : "text-[var(--text)] hover:bg-[var(--paper)]"
-                    }`}
-                  >
-                    {groupPathLabel(groups, g.id)}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEditGroupForm(g)}
-                    title="グループを編集"
-                    className={`px-1.5 border-l ${
-                      active
-                        ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                        : "border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--paper)]"
-                    }`}
-                  >
-                    <Pencil size={11} />
-                  </button>
-                </div>
-              );
-            })}
+          <div className="flex gap-2">
+            <select
+              className={`${inputCls} flex-1 min-w-0`}
+              value={form.groupId || ""}
+              onChange={(e) => setForm({ ...form, groupId: e.target.value || null })}
+            >
+              <option value="">(グループなし)</option>
+              {flattenGroupTree(groups).map(({ group: g, depth }) => (
+                <option key={g.id} value={g.id}>
+                  {"\u00A0\u00A0\u00A0".repeat(depth)}{depth > 0 ? "└ " : ""}{g.name}
+                </option>
+              ))}
+            </select>
+            {form.groupId && groups.some((g) => g.id === form.groupId) && (
+              <button
+                type="button"
+                onClick={() => openEditGroupForm(groups.find((g) => g.id === form.groupId))}
+                title="選んでいるグループを編集"
+                className="px-2.5 border border-[var(--border)] rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
             <button
               type="button"
               onClick={openNewGroupForm}
-              className="text-sm px-3 py-1.5 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
+              title="新しいグループを作る"
+              className="text-sm px-3 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1 shrink-0"
             >
               <Plus size={14} /> 新規
             </button>
@@ -215,7 +205,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addProcess(); } }}
               placeholder="加工名を入力してEnterで追加"
             />
-            <button onClick={addProcess} className="text-sm px-3 border border-[var(--border)] rounded-md">追加</button>
+            <button onClick={addProcess} className="text-sm px-3 shrink-0 whitespace-nowrap border border-[var(--border)] rounded-md">追加</button>
           </div>
         </div>
         <div className="bg-[var(--paper)] rounded-md px-3 py-2 text-sm">
