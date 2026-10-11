@@ -27,7 +27,21 @@ export const saveProjects = (value) => save("projects", value);
 export const loadSessions = (fallback) => load("sessions", fallback);
 export const saveSessions = (value) => save("sessions", value);
 
-export const loadLineItems = (fallback) => load("lineItems", fallback);
+// 過去の不具合でidが重複した明細は、2件目以降に新しいidを振って別々の明細に戻す
+const dedupeIds = (items) => {
+  if (!Array.isArray(items)) return items;
+  const seen = new Set();
+  return items.map((it, i) => {
+    if (!seen.has(it.id)) {
+      seen.add(it.id);
+      return it;
+    }
+    const id = `qli-fix-${Date.now().toString(36)}-${i}`;
+    seen.add(id);
+    return { ...it, id };
+  });
+};
+export const loadLineItems = (fallback) => dedupeIds(load("lineItems", fallback));
 export const saveLineItems = (value) => save("lineItems", value);
 
 export const loadGroups = (fallback) => load("groups", fallback);
