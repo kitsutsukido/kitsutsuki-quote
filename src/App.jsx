@@ -68,7 +68,7 @@ export default function App() {
     setView("productOverview");
   };
 
-  // baseSessionId を渡すと、その確定見積もりの明細をコピーした仮見積もりを新ロットに作る
+  // baseSessionId を渡すと、その確定見積もりの明細をコピーした確定見積もりを新ロットに作る
   const registerLot = (productId, round, qty, baseSessionId) => {
     const newProject = {
       id: `prj-${Date.now()}`,
@@ -85,7 +85,7 @@ export default function App() {
       const baseLabel = `${baseProject ? baseProject.round + " " : ""}${base.label}`;
       setSessions((prev) => [
         ...prev,
-        { id: sid, projectId: newProject.id, label: "仮見積もり①", date: new Date().toISOString().slice(0, 10), status: "仮", baseSessionId: base.id, baseLabel },
+        { id: sid, projectId: newProject.id, label: "確定見積もり", date: new Date().toISOString().slice(0, 10), status: "確定", baseSessionId: base.id, baseLabel },
       ]);
       const copies = lineItems
         .filter((it) => it.sessionId === base.id)

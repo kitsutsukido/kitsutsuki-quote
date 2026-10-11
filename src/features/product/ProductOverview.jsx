@@ -113,7 +113,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
                 <option key={o.id} value={o.id}>{o.text}</option>
               ))}
             </select>
-            <p className="text-xs text-[var(--text-muted)] mt-1">選ぶと、その明細をコピーした仮見積もりが新ロットに作られます。あとで自由に直せます。</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">選ぶと、その明細をコピーした確定見積もりが新ロットに作られます。あとで自由に直せます。</p>
           </Field>
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowForm(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">
