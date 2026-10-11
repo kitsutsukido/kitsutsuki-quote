@@ -194,7 +194,10 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
           <Field label="斤量"><input className={inputCls} value={form.weight} onChange={set("weight")} placeholder="90kg" /></Field>
         </div>
-        <Field label="紙の色(複数ならまとめて記入)"><input className={inputCls} value={form.paperColor || ""} onChange={set("paperColor")} placeholder="例：ホワイト、ピンク" /></Field>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="紙の色(複数ならまとめて記入)"><input className={inputCls} value={form.paperColor || ""} onChange={set("paperColor")} placeholder="例：ホワイト、ピンク" /></Field>
+          <Field label="インクの色(複数ならまとめて記入)"><input className={inputCls} value={form.inkColor || ""} onChange={set("inkColor")} placeholder="例：黒、赤" /></Field>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label="表面の色数">
             <select className={inputCls} value={form.colorFront} onChange={set("colorFront")}>
