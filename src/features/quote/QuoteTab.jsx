@@ -7,7 +7,7 @@ import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
-export function QuoteTab({ project, projects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
+export function QuoteTab({ project, projects, setProjects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
   const projectSessions = sessions.filter((s) => s.projectId === project.id);
   const [activeSessionId, setActiveSessionId] = useState(
     projectSessions.find((s) => s.status === "確定")?.id || projectSessions[0]?.id
@@ -37,7 +37,15 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
 
   const draftSessions = projectSessions.filter((x) => x.status === "仮");
   const [pickerStatus, setPickerStatus] = useState(null); // null=非表示 / "仮" / "確定" = 追加するセッションの種類
-  const baseCandidates = pickerStatus === "確定" ? draftSessions : projectSessions;
+  // ベースにできる見積もり。同じロットの(確定を作るなら仮のみ)、同じ商品の別ロットの確定見積もり
+  const lotName = (id) => projects.find((p) => p.id === id)?.round || "";
+  const candidatesFor = (status) => {
+    const own = status === "確定" ? draftSessions : projectSessions;
+    const otherLotIds = projects.filter((p) => p.productId === project.productId && p.id !== project.id).map((p) => p.id);
+    const others = sessions.filter((x) => otherLotIds.includes(x.projectId) && x.status === "確定");
+    return [...own, ...others];
+  };
+  const baseCandidates = pickerStatus ? candidatesFor(pickerStatus) : [];
   const [sessionDateDraft, setSessionDateDraft] = useState("");
 
   // baseSessionId を渡すと、そのセッションの明細をコピーして作る(購入・入稿の進捗は空に戻す)
@@ -50,11 +58,11 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
       status === "確定"
         ? count === 0 ? "確定見積もり" : `確定見積もり${mark}`
         : `仮見積もり${mark}`;
-    const base = baseSessionId ? projectSessions.find((x) => x.id === baseSessionId) : null;
+    const base = baseSessionId ? sessions.find((x) => x.id === baseSessionId) : null;
     const newSession = { id, projectId: project.id, label, date: new Date().toISOString().slice(0, 7), status };
     if (base) {
       newSession.baseSessionId = base.id;
-      newSession.baseLabel = base.label;
+      newSession.baseLabel = base.projectId === project.id ? base.label : `${lotName(base.projectId)} ${base.label}`;
       const copies = lineItems
         .filter((it) => it.sessionId === base.id)
         .map((it, i) => ({
@@ -100,6 +108,13 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
     const label = sessionLabelDraft.trim();
     if (label) {
       setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, label, date: sessionDateDraft || s.date } : s)));
+      // 確定見積もりの月に合わせて、「◯年◯月ロット」という形のロット名も更新する(手で付けた別の名前は変えない)
+      const edited = projectSessions.find((s) => s.id === id);
+      const m = (sessionDateDraft || "").match(/^(\d{4})-(\d{2})/);
+      if (edited?.status === "確定" && m && /^\d{4}年\d{1,2}月ロット$/.test(project.round || "")) {
+        const round = `${m[1]}年${Number(m[2])}月ロット`;
+        setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, round } : p)));
+      }
     }
     setEditingSessionId(null);
   };
@@ -176,11 +191,11 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
             </button>
           </div>
         ))}
-        <button onClick={() => (projectSessions.length > 0 ? setPickerStatus("仮") : addSession("仮"))} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
+        <button onClick={() => (candidatesFor("仮").length > 0 ? setPickerStatus("仮") : addSession("仮"))} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
           <Plus size={14} /> 仮見積もりを追加
         </button>
         <button
-          onClick={() => (draftSessions.length > 0 ? setPickerStatus("確定") : addSession("確定"))}
+          onClick={() => (candidatesFor("確定").length > 0 ? setPickerStatus("確定") : addSession("確定"))}
           className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
           <Plus size={14} /> 確定見積もりを追加
         </button>
@@ -205,7 +220,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                     onClick={() => addSession(pickerStatus, d.id)}
                     className="w-full text-left border border-[var(--border)] rounded-md px-3 py-2 hover:border-[var(--accent)] flex justify-between items-center gap-2"
                   >
-                    <span className="text-sm text-[var(--ink)]">{d.label} <span className="text-xs text-[var(--text-muted)]">{(d.date || "").slice(0, 7)}</span></span>
+                    <span className="text-sm text-[var(--ink)]">{d.projectId !== project.id && <span className="text-xs text-[var(--text-muted)]">{lotName(d.projectId)} </span>}{d.label} <span className="text-xs text-[var(--text-muted)]">{(d.date || "").slice(0, 7)}</span></span>
                     <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{count}点・{sum.toLocaleString()}円</span>
                   </button>
                 );

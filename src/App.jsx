@@ -82,10 +82,12 @@ export default function App() {
     if (base) {
       const sid = `qs-${Date.now()}`;
       const baseProject = projects.find((p) => p.id === base.projectId);
+      const rm = round.match(/^(\d{4})年(\d{1,2})月/);
+      const lotMonth = rm ? `${rm[1]}-${rm[2].padStart(2, "0")}` : new Date().toISOString().slice(0, 7);
       const baseLabel = `${baseProject ? baseProject.round + " " : ""}${base.label}`;
       setSessions((prev) => [
         ...prev,
-        { id: sid, projectId: newProject.id, label: "確定見積もり", date: new Date().toISOString().slice(0, 7), status: "確定", baseSessionId: base.id, baseLabel },
+        { id: sid, projectId: newProject.id, label: "確定見積もり", date: lotMonth, status: "確定", baseSessionId: base.id, baseLabel },
       ]);
       const copies = lineItems
         .filter((it) => it.sessionId === base.id)
@@ -178,7 +180,7 @@ export default function App() {
               </div>
 
               {tab === "quote" && (
-                <QuoteTab project={project} projects={projects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
+                <QuoteTab project={project} projects={projects} setProjects={setProjects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
               )}
               {tab === "submission" && (
                 <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} />
