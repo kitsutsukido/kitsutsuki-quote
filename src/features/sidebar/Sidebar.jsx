@@ -129,9 +129,9 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
         </div>
       ) : (
         <div className="px-1 space-y-2">
-          <p className="text-xs text-[var(--text-muted)]">既存の商品に新しい印刷ロットを追加するか、まったく新しい商品を作成します。</p>
+          <p className="text-xs text-[var(--text-muted)]">まったく新しい商品を作成します。増刷(新しいロット)は、既存の商品を開いて「増刷を登録」から追加してください。</p>
           <button onClick={onCreateNew} className="w-full text-sm px-3 py-2 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center justify-center gap-1">
-            <Plus size={14} /> 新規案件を作成
+            <Plus size={14} /> 新規商品を作成
           </button>
         </div>
       )}
