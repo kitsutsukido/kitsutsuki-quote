@@ -19,6 +19,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
   const skipBlurSave = useRef(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
+  const activeSession = projectSessions.find((x) => x.id === activeSessionId);
   const items = lineItems.filter((it) => it.sessionId === activeSessionId);
   const total = items.reduce((s, it) => s + it.amount, 0);
 
@@ -35,7 +36,11 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
 
   const ungrouped = items.filter((it) => !it.groupId);
 
-  const addSession = (status) => {
+  const draftSessions = projectSessions.filter((x) => x.status === "仮");
+  const [showBasePicker, setShowBasePicker] = useState(false);
+
+  // baseSessionId を渡すと、そのセッションの明細をコピーして作る(購入・入稿の進捗は空に戻す)
+  const addSession = (status, baseSessionId) => {
     const id = `qs-${Date.now()}`;
     const circled = "①②③④⑤⑥⑦⑧⑨";
     const count = projectSessions.filter((s) => s.status === status).length;
@@ -44,9 +49,26 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
       status === "確定"
         ? count === 0 ? "確定見積もり" : `確定見積もり${mark}`
         : `仮見積もり${mark}`;
+    const base = baseSessionId ? projectSessions.find((x) => x.id === baseSessionId) : null;
     const newSession = { id, projectId: project.id, label, date: new Date().toISOString().slice(0, 10), status };
+    if (base) {
+      newSession.baseSessionId = base.id;
+      newSession.baseLabel = base.label;
+      const copies = lineItems
+        .filter((it) => it.sessionId === base.id)
+        .map((it, i) => ({
+          ...it,
+          id: `qli-${Date.now()}-${i}`,
+          sessionId: id,
+          processes: [...(it.processes || [])],
+          purchaseStatus: "未",
+          actualDate: "",
+        }));
+      setLineItems((prev) => [...prev, ...copies]);
+    }
     setSessions((prev) => [...prev, newSession]);
     setActiveSessionId(id);
+    setShowBasePicker(false);
   };
 
   const deleteSession = (id) => {
@@ -155,10 +177,50 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
         <button onClick={() => addSession("仮")} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
           <Plus size={14} /> 仮見積もりを追加
         </button>
-        <button onClick={() => addSession("確定")} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
+        <button
+          onClick={() => (draftSessions.length > 0 ? setShowBasePicker(true) : addSession("確定"))}
+          className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
           <Plus size={14} /> 確定見積もりを追加
         </button>
       </div>
+
+      {activeSession?.baseLabel && (
+        <p className="text-xs text-[var(--text-muted)] -mt-2">「{activeSession.baseLabel}」をベースに作成</p>
+      )}
+
+      {showBasePicker && (
+        <Modal>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+            <p className="text-sm font-medium text-[var(--ink)]">確定見積もりのベースを選んでください</p>
+            <p className="text-xs text-[var(--text-muted)]">選んだ仮見積もりの明細をコピーして作ります。コピー後に自由に直せます(元の仮見積もりは変わりません)。</p>
+            <div className="space-y-2">
+              {draftSessions.map((d) => {
+                const count = lineItems.filter((it) => it.sessionId === d.id).length;
+                const sum = lineItems.filter((it) => it.sessionId === d.id).reduce((t, it) => t + it.amount, 0);
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => addSession("確定", d.id)}
+                    className="w-full text-left border border-[var(--border)] rounded-md px-3 py-2 hover:border-[var(--accent)] flex justify-between items-center gap-2"
+                  >
+                    <span className="text-sm text-[var(--ink)]">{d.label} <span className="text-xs text-[var(--text-muted)]">{d.date}</span></span>
+                    <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{count}点・{sum.toLocaleString()}円</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => addSession("確定")}
+                className="w-full text-left border border-dashed border-[var(--border)] rounded-md px-3 py-2 text-sm text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+              >
+                空の状態から作る
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => setShowBasePicker(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">キャンセル</button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {!activeSessionId ? (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-6 text-center text-sm text-[var(--text-muted)]">
