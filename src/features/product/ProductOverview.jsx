@@ -21,9 +21,17 @@ function findLatestConfirmedLot(product, projects, sessions) {
 // ---------- 商品サマリー画面 ----------
 export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot }) {
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ round: "", qty: "500" });
+  const [form, setForm] = useState({ round: "", qty: "500", baseId: "" });
 
   const productProjects = projects.filter((p) => p.productId === product.id);
+  const confirmedOptions = productProjects.flatMap((p) =>
+    sessions
+      .filter((s) => s.projectId === p.id && s.status === "確定")
+      .map((s) => ({
+        id: s.id,
+        text: `${p.round} ${s.label}(${s.date}・${lineItems.filter((it) => it.sessionId === s.id).reduce((t, it) => t + it.amount, 0).toLocaleString()}円)`,
+      }))
+  );
   const latest = findLatestConfirmedLot(product, projects, sessions);
 
   let unitPrice = null;
@@ -45,9 +53,9 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
   const submit = () => {
     const round = form.round.trim();
     if (!round) return;
-    registerLot(product.id, round, form.qty);
+    registerLot(product.id, round, form.qty, form.baseId);
     setShowForm(false);
-    setForm({ round: "", qty: "500" });
+    setForm({ round: "", qty: "500", baseId: "" });
   };
 
   return (
@@ -97,6 +105,15 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
               value={form.qty}
               onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
             />
+          </Field>
+          <Field label="金額のもとにする確定見積もり">
+            <select className={inputCls} value={form.baseId} onChange={(e) => setForm((f) => ({ ...f, baseId: e.target.value }))}>
+              <option value="">(使わない・空から作る)</option>
+              {confirmedOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.text}</option>
+              ))}
+            </select>
+            <p className="text-xs text-[var(--text-muted)] mt-1">選ぶと、その明細をコピーした仮見積もりが新ロットに作られます。あとで自由に直せます。</p>
           </Field>
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowForm(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">
