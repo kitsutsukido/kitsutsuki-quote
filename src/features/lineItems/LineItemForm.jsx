@@ -21,6 +21,15 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const material = isMaterial(form);
+  const anySide = (form.colorFront || "").endsWith("*"); // 「面の指定なし」(クリアファイルなど)
+  // 表面の色数を変える。「面の指定なし」を選ぶと裏面は選べなくなる(空)。戻したら裏面は片面(0c)に
+  const setFront = (e) => {
+    const v = e.target.value;
+    const next = { ...form, colorFront: v };
+    if (v.endsWith("*")) next.colorBack = "";
+    else if (anySide || next.colorBack === "") next.colorBack = "0c";
+    setForm(next);
+  };
 
   const openNewGroupForm = () => {
     setGroupForm(groupFormDefaults);
@@ -199,14 +208,17 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
           <Field label="インクの色(複数ならまとめて記入)"><input className={inputCls} value={form.inkColor || ""} onChange={set("inkColor")} placeholder="例：黒、赤" /></Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="表面の色数">
-            <select className={inputCls} value={form.colorFront} onChange={set("colorFront")}>
-              <option value="">指定なし(面の区別なし)</option><option value="0c">印刷なし(0c)</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)</option>
+          <Field label={anySide ? "印刷の色数" : "表面の色数"}>
+            <select className={inputCls} value={form.colorFront} onChange={setFront}>
+              {form.colorFront === "" && <option value="">(未選択)</option>}
+              <option value="0c">印刷なし(0c)</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)</option>
+              <option value="1c*">1色(面の指定なし)</option><option value="2c*">2色(面の指定なし)</option><option value="4c*">4色(面の指定なし)</option>
             </select>
           </Field>
           <Field label="裏面の色数">
-            <select className={inputCls} value={form.colorBack} onChange={set("colorBack")}>
-              <option value="">指定なし(面の区別なし)</option><option value="0c">印刷なし(0c)＝片面</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)＝両面</option>
+            <select className={inputCls} value={anySide ? "" : form.colorBack} onChange={set("colorBack")} disabled={anySide}>
+              {anySide && <option value="">― (面の指定なし)</option>}
+              <option value="0c">印刷なし(0c)＝片面</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)＝両面</option>
             </select>
           </Field>
         </div>
