@@ -194,15 +194,16 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
           <Field label="斤量"><input className={inputCls} value={form.weight} onChange={set("weight")} placeholder="90kg" /></Field>
         </div>
+        <Field label="紙の色(複数ならまとめて記入)"><input className={inputCls} value={form.paperColor || ""} onChange={set("paperColor")} placeholder="例：ホワイト、ピンク" /></Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="表面の色数">
             <select className={inputCls} value={form.colorFront} onChange={set("colorFront")}>
-              <option value="0c">印刷なし(0c)</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)</option>
+              <option value="">指定なし(面の区別なし)</option><option value="0c">印刷なし(0c)</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)</option>
             </select>
           </Field>
           <Field label="裏面の色数">
             <select className={inputCls} value={form.colorBack} onChange={set("colorBack")}>
-              <option value="0c">印刷なし(0c)＝片面</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)＝両面</option>
+              <option value="">指定なし(面の区別なし)</option><option value="0c">印刷なし(0c)＝片面</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)＝両面</option>
             </select>
           </Field>
         </div>

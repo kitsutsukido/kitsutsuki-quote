@@ -48,6 +48,7 @@ export const createLineItem = (fields) => ({
   size: "",
   paper: "",
   weight: "",
+  paperColor: "", // 紙(封筒など)の色。複数ならまとめて記入
   colorFront: "4c",
   colorBack: "0c",
   processes: [],

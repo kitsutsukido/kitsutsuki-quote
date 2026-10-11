@@ -8,10 +8,13 @@ export function specString(item) {
   if (isMaterial(item)) {
     return [item.size, item.note].filter(Boolean).join("・");
   }
+  // 色数は「指定なし」(空)のとき表示しない(クリアファイルなど面の区別がないもの用)
+  const colors = [item.colorFront, item.colorBack].filter(Boolean).join("/");
   const parts = [
     item.size,
-    `${item.colorFront}/${item.colorBack}`,
+    colors,
     item.paper ? `${item.paper}${item.weight || ""}` : item.weight,
+    item.paperColor ? `紙色:${item.paperColor}` : "",
     ...(item.processes || []),
   ].filter(Boolean);
   return parts.join(" ");
