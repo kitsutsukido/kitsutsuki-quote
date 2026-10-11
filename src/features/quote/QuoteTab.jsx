@@ -51,7 +51,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
         ? count === 0 ? "確定見積もり" : `確定見積もり${mark}`
         : `仮見積もり${mark}`;
     const base = baseSessionId ? projectSessions.find((x) => x.id === baseSessionId) : null;
-    const newSession = { id, projectId: project.id, label, date: new Date().toISOString().slice(0, 10), status };
+    const newSession = { id, projectId: project.id, label, date: new Date().toISOString().slice(0, 7), status };
     if (base) {
       newSession.baseSessionId = base.id;
       newSession.baseLabel = base.label;
@@ -92,7 +92,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
 
   const startEditSession = (s) => {
     setSessionLabelDraft(s.label);
-    setSessionDateDraft(s.date || "");
+    setSessionDateDraft((s.date || "").slice(0, 7));
     setEditingSessionId(s.id);
   };
 
@@ -151,7 +151,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                   className="text-sm bg-transparent border-b border-[var(--accent)] outline-none w-28"
                 />
                 <input
-                  type="date"
+                  type="month"
                   value={sessionDateDraft}
                   onChange={(e) => setSessionDateDraft(e.target.value)}
                   className="text-xs bg-transparent border-b border-[var(--accent)] outline-none"
@@ -161,7 +161,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               </div>
             ) : (
               <button onClick={() => setActiveSessionId(s.id)} className="flex items-center gap-1">
-                {s.label} <span className="text-xs text-[var(--text-muted)]">{s.date}</span>
+                {s.label} <span className="text-xs text-[var(--text-muted)]">{(s.date || "").slice(0, 7)}</span>
               </button>
             )}
             {editingSessionId !== s.id && (
@@ -203,7 +203,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                     onClick={() => addSession(pickerStatus, d.id)}
                     className="w-full text-left border border-[var(--border)] rounded-md px-3 py-2 hover:border-[var(--accent)] flex justify-between items-center gap-2"
                   >
-                    <span className="text-sm text-[var(--ink)]">{d.label} <span className="text-xs text-[var(--text-muted)]">{d.date}</span></span>
+                    <span className="text-sm text-[var(--ink)]">{d.label} <span className="text-xs text-[var(--text-muted)]">{(d.date || "").slice(0, 7)}</span></span>
                     <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{count}点・{sum.toLocaleString()}円</span>
                   </button>
                 );
