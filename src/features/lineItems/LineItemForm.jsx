@@ -2,7 +2,8 @@ import { useState } from "react";
 import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { specString } from "../../lib/spec.js";
+import { Chip } from "../../components/common/Chip.jsx";
+import { specString, isMaterial, materialTotalQty, TAPE_OPTIONS, KIND_PRINT, KIND_MATERIAL } from "../../lib/spec.js";
 import { createLineItem } from "../../data/seedData.js";
 import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
@@ -18,6 +19,18 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
   const isEditingGroup = groupFormTarget && groupFormTarget !== "new";
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  // 資材の「1パック価格 × パック数」から金額(合計)を自動計算する(金額欄は手で直してもよい)
+  const setMaterial = (k) => (e) => {
+    const next = { ...form, [k]: e.target.value };
+    if (Number(next.packPrice) > 0 && Number(next.packCount) > 0) {
+      next.amount = Number(next.packPrice) * Number(next.packCount);
+    }
+    setForm(next);
+  };
+  const material = isMaterial(form);
+  const totalQty = materialTotalQty(form);
+  const needQty = Number(form.qty) || 0;
 
   const openNewGroupForm = () => {
     setGroupForm(groupFormDefaults);
@@ -168,8 +181,41 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         </div>
       )}
 
+      <div>
+        <label className="text-xs text-[var(--text-muted)] block mb-1">種別</label>
+        <div className="flex flex-wrap gap-2">
+          <Chip active={!material} onClick={() => setForm({ ...form, kind: KIND_PRINT })}>印刷物</Chip>
+          <Chip active={material} onClick={() => setForm({ ...form, kind: KIND_MATERIAL })}>資材(OPP袋・ダンボールなど)</Chip>
+        </div>
+      </div>
+
       <div className="border border-[var(--border)] rounded-md p-3 space-y-3">
         <p className="text-xs text-[var(--text-muted)]">仕様</p>
+        {material && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="サイズ(規格)"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A5用" /></Field>
+              <Field label="テープ">
+                <select className={inputCls} value={form.tape || "なし"} onChange={set("tape")}>
+                  {TAPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="入数(枚/パック)"><input type="number" className={inputCls} value={form.packSize} onChange={setMaterial("packSize")} placeholder="100" /></Field>
+              <Field label="購入パック数"><input type="number" className={inputCls} value={form.packCount} onChange={setMaterial("packCount")} placeholder="5" /></Field>
+              <Field label="1パックの価格"><input type="number" className={inputCls} value={form.packPrice} onChange={setMaterial("packPrice")} placeholder="1000" /></Field>
+            </div>
+            {totalQty && (
+              <p className={`text-xs ${totalQty < needQty ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
+                購入 {totalQty.toLocaleString()}枚 / 必要 {needQty.toLocaleString()}枚 →{" "}
+                {totalQty >= needQty ? `余り ${(totalQty - needQty).toLocaleString()}枚` : `不足 ${(needQty - totalQty).toLocaleString()}枚`}
+              </p>
+            )}
+          </>
+        )}
+        {!material && (
+        <>
         <div className="grid grid-cols-3 gap-3">
           <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
@@ -208,13 +254,15 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
             <button onClick={addProcess} className="text-sm px-3 shrink-0 whitespace-nowrap border border-[var(--border)] rounded-md">追加</button>
           </div>
         </div>
+        </>
+        )}
         <div className="bg-[var(--paper)] rounded-md px-3 py-2 text-sm">
           <span className="text-[var(--text-muted)] text-xs">仕様プレビュー：</span> <span className="font-medium">{specString(form)}</span>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Field label="部数"><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
+        <Field label={material ? "必要数" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
         <Field label="入稿先"><input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder="プリントパック" /></Field>
       </div>

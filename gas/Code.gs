@@ -70,7 +70,9 @@ function writeArrayToSheet_(sheetName, arr, legacyNames) {
   const sh = getOrCreateSheet_(sheetName, legacyNames);
   sh.clearContents();
   if (!arr || !arr.length) return;
-  const headers = Object.keys(arr[0]);
+  // 先頭の行にないキー(明細の資材用項目など、一部の行だけが持つ項目)も落とさないよう、全行のキーを集める
+  const headers = [];
+  arr.forEach((obj) => Object.keys(obj).forEach((k) => { if (headers.indexOf(k) === -1) headers.push(k); }));
   const rows = arr.map((obj) => headers.map((h) => (obj[h] === undefined ? "" : obj[h])));
   sh.getRange(1, 1, 1, headers.length).setValues([headers]);
   sh.getRange(2, 1, rows.length, headers.length).setValues(rows);

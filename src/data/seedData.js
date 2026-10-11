@@ -42,6 +42,7 @@ let lineItemSeq = 1;
 export const createLineItem = (fields) => ({
   id: `qli-${lineItemSeq++}`,
   sessionId: "qs5",
+  kind: "print", // print(印刷物) | material(資材)
   groupId: null,
   name: "",
   size: "",
@@ -50,6 +51,10 @@ export const createLineItem = (fields) => ({
   colorFront: "4c",
   colorBack: "0c",
   processes: [],
+  tape: "なし", // 資材用
+  packSize: "", // 資材用: 1パックの入数
+  packCount: "", // 資材用: 購入パック数
+  packPrice: "", // 資材用: 1パックの価格
   qty: 500,
   amount: 0,
   submitTo: "",
