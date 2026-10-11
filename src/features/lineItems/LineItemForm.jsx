@@ -99,16 +99,16 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="梱包グループ">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select
-              className={`${inputCls} flex-1 min-w-0`}
+              className={`${inputCls} w-full min-w-0`}
               value={form.groupId || ""}
               onChange={(e) => setForm({ ...form, groupId: e.target.value || null })}
             >
               <option value="">(グループなし)</option>
               {flattenGroupTree(groups).map(({ group: g, depth }) => (
                 <option key={g.id} value={g.id}>
-                  {"\u00A0\u00A0\u00A0".repeat(depth)}{depth > 0 ? "└ " : ""}{g.name}
+                  {"\u00A0".repeat(depth * 2)}{depth > 0 ? "└" : ""}{g.name}
                 </option>
               ))}
             </select>
@@ -117,7 +117,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
                 type="button"
                 onClick={() => openEditGroupForm(groups.find((g) => g.id === form.groupId))}
                 title="選んでいるグループを編集"
-                className="px-2.5 border border-[var(--border)] rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+                className="px-2.5 py-1.5 border border-[var(--border)] rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
               >
                 <Pencil size={14} />
               </button>
@@ -126,7 +126,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
               type="button"
               onClick={openNewGroupForm}
               title="新しいグループを作る"
-              className="text-sm px-3 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1 shrink-0"
+              className="text-sm px-3 py-1.5 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1 shrink-0"
             >
               <Plus size={14} /> 新規
             </button>
