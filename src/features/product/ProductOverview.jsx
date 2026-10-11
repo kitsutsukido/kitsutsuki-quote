@@ -109,7 +109,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {productProjects.map((p) => (
           <button
             key={p.id}
