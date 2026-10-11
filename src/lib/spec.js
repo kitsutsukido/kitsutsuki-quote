@@ -9,7 +9,8 @@ export function specString(item) {
     return [item.size, item.note].filter(Boolean).join("・");
   }
   // 色数は「指定なし」(空)のとき表示しない(クリアファイルなど面の区別がないもの用)
-  const colors = [item.colorFront, item.colorBack].filter(Boolean).join("/");
+  const front = item.colorFront || "";
+  const colors = front.endsWith("*") ? `${front.slice(0, -1)}(面指定なし)` : [front, item.colorBack].filter(Boolean).join("/");
   const parts = [
     item.size,
     colors,
