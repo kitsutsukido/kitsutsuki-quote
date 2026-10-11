@@ -11,11 +11,13 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
 
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState({ name: "" });
+  const [wrapTarget, setWrapTarget] = useState(null); // 「外側に追加」の対象グループid
   const [addingParent, setAddingParent] = useState(undefined); // undefined=非表示 / null=最上位に追加 / id=そのグループの中に追加
   const [newDraft, setNewDraft] = useState({ name: "" });
 
   const startEdit = (g) => {
     setAddingParent(undefined);
+    setWrapTarget(null);
     setEditingId(g.id);
     setEditDraft({ name: g.name });
   };
@@ -52,10 +54,30 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
 
   const startAdd = (parentId) => {
     setEditingId(null);
+    setWrapTarget(null);
     setNewDraft({ name: "" });
     setAddingParent(parentId);
   };
   const cancelAdd = () => setAddingParent(undefined);
+
+  // 「外側に追加」: 対象グループと同じ位置に新しいグループを作り、対象をその中に入れる
+  const startWrap = (g) => {
+    setEditingId(null);
+    setAddingParent(undefined);
+    setNewDraft({ name: "" });
+    setWrapTarget(g.id);
+  };
+  const cancelWrap = () => setWrapTarget(null);
+  const submitWrap = (target) => {
+    const name = newDraft.name.trim();
+    if (!name) return;
+    const newId = `grp-${Date.now()}`;
+    setGroups((prev) => [
+      ...prev.map((g) => (g.id === target.id ? { ...g, parentId: newId } : g)),
+      { id: newId, productId, name, parentId: target.parentId || null },
+    ]);
+    setWrapTarget(null);
+  };
 
   const submitAdd = (parentId) => {
     const name = newDraft.name.trim();
@@ -86,24 +108,24 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
     </div>
   );
 
-  const renderNewRow = (parentId) => (
+  const renderNewRow = (onSubmit, onCancel = cancelAdd) => (
     <div className="flex-1 flex flex-wrap items-center gap-2">
       <input
         className={`${inputCls} w-40`}
         placeholder="グループ名"
         value={newDraft.name}
         onChange={(e) => setNewDraft({ ...newDraft, name: e.target.value })}
-        onKeyDown={(e) => { if (e.key === "Enter") submitAdd(parentId); }}
+        onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}
         autoFocus
       />
       <div className="flex gap-1.5">
         <button
-          onClick={() => submitAdd(parentId)}
+          onClick={onSubmit}
           className="text-xs px-2.5 py-1 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1 font-medium"
         >
           <Check size={13} /> 作成
         </button>
-        <button onClick={cancelAdd} className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text)] rounded-md flex items-center gap-1">
+        <button onClick={onCancel} className="text-xs px-2.5 py-1 border border-[var(--border)] text-[var(--text)] rounded-md flex items-center gap-1">
           <X size={13} /> キャンセル
         </button>
       </div>
@@ -129,12 +151,12 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
                 <Trash2 size={14} />
               </button>
             </div>
-            <div className="order-3 md:order-2 w-full md:w-auto flex items-center gap-2">
+            <div className="order-3 md:order-2 w-full md:w-auto flex flex-wrap md:flex-nowrap items-center gap-2">
               <select
                 value={group.parentId || ""}
                 onChange={(e) => changeParent(group, e.target.value)}
                 title="入れる先(親)を変更"
-                className="flex-1 md:flex-none min-w-0 text-xs border border-[var(--border)] rounded-md px-1.5 py-1 bg-[var(--card)] text-[var(--text)] md:max-w-[10rem]"
+                className="flex-1 md:flex-none min-w-[9rem] md:min-w-0 text-xs border border-[var(--border)] rounded-md px-1.5 py-1 bg-[var(--card)] text-[var(--text)] md:max-w-[10rem]"
               >
                 <option value="">(最上位)</option>
                 {parentOptions.map((o) => (
@@ -148,16 +170,29 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
               >
                 <Plus size={12} /> 中に追加
               </button>
+              <button
+                onClick={() => startWrap(group)}
+                title="このグループを包む、新しい外側のグループを作る"
+                className="shrink-0 whitespace-nowrap text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
+              >
+                <Plus size={12} /> 外側に追加
+              </button>
             </div>
           </>
         )}
+      </div>
+    );
+    const wrapForm = wrapTarget === group.id && (
+      <div className="mt-1.5 border border-dashed border-[var(--border)] rounded-md p-2 space-y-1.5">
+        <p className="text-xs text-[var(--text-muted)]">「{group.name}」を包む、新しい外側のグループの名前</p>
+        {renderNewRow(() => submitWrap(group), cancelWrap)}
       </div>
     );
     const nested = (children.length > 0 || addingParent === group.id) && (
       <div className="ml-2 md:ml-3 mt-1.5 pl-2 md:pl-3 border-l-2 border-[var(--border)] space-y-1.5">
         {children.map(renderNode)}
         {addingParent === group.id && (
-          <div className="border border-dashed border-[var(--border)] rounded-md p-2">{renderNewRow(group.id)}</div>
+          <div className="border border-dashed border-[var(--border)] rounded-md p-2">{renderNewRow(() => submitAdd(group.id))}</div>
         )}
       </div>
     );
@@ -165,6 +200,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
       return (
         <div key={group.id} className="border border-[var(--border)] rounded-md p-3">
           {row}
+          {wrapForm}
           {nested}
         </div>
       );
@@ -172,6 +208,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
     return (
       <div key={group.id}>
         {row}
+        {wrapForm}
         {nested}
       </div>
     );
@@ -189,7 +226,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         </button>
       </div>
 
-      {addingParent === null && <div className="border border-dashed border-[var(--border)] rounded-md p-2">{renderNewRow(null)}</div>}
+      {addingParent === null && <div className="border border-dashed border-[var(--border)] rounded-md p-2">{renderNewRow(() => submitAdd(null))}</div>}
 
       {tree.length === 0 && addingParent !== null && (
         <p className="text-sm text-[var(--text-muted)]">梱包グループがまだありません。「外側の梱包を追加」から作成してください。</p>
