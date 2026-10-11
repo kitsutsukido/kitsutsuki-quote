@@ -156,27 +156,29 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
                 value={group.parentId || ""}
                 onChange={(e) => changeParent(group, e.target.value)}
                 title="入れる先(親)を変更"
-                className="flex-1 md:flex-none min-w-[9rem] md:min-w-0 text-xs border border-[var(--border)] rounded-md px-1.5 py-1 bg-[var(--card)] text-[var(--text)] md:max-w-[10rem]"
+                className="w-full md:w-auto min-w-0 text-xs border border-[var(--border)] rounded-md px-1.5 py-1.5 md:py-1 bg-[var(--card)] text-[var(--text)] md:max-w-[10rem]"
               >
                 <option value="">(最上位)</option>
                 {parentOptions.map((o) => (
                   <option key={o.id} value={o.id}>{o.label}</option>
                 ))}
               </select>
-              <button
-                onClick={() => startAdd(group.id)}
-                title="このグループの中に追加"
-                className="shrink-0 whitespace-nowrap text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
-              >
-                <Plus size={12} /> 中に追加
-              </button>
-              <button
-                onClick={() => startWrap(group)}
-                title="このグループを包む、新しい外側のグループを作る"
-                className="shrink-0 whitespace-nowrap text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
-              >
-                <Plus size={12} /> 外側に追加
-              </button>
+              <div className="w-full md:w-auto flex gap-2">
+                <button
+                  onClick={() => startAdd(group.id)}
+                  title="このグループの中に追加"
+                  className="flex-1 md:flex-none justify-center shrink-0 whitespace-nowrap text-xs px-2 py-1.5 md:py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
+                >
+                  <Plus size={12} /> 中に追加
+                </button>
+                <button
+                  onClick={() => startWrap(group)}
+                  title="このグループを包む、新しい外側のグループを作る"
+                  className="flex-1 md:flex-none justify-center shrink-0 whitespace-nowrap text-xs px-2 py-1.5 md:py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
+                >
+                  <Plus size={12} /> 外側に追加
+                </button>
+              </div>
             </div>
           </>
         )}
