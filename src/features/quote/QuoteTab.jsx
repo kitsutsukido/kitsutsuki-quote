@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Plus, X, Pencil } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
@@ -16,7 +16,6 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
   const [editingItem, setEditingItem] = useState(null);
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [sessionLabelDraft, setSessionLabelDraft] = useState("");
-  const skipBlurSave = useRef(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
   const activeSession = projectSessions.find((x) => x.id === activeSessionId);
@@ -37,7 +36,9 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
   const ungrouped = items.filter((it) => !it.groupId);
 
   const draftSessions = projectSessions.filter((x) => x.status === "仮");
-  const [showBasePicker, setShowBasePicker] = useState(false);
+  const [pickerStatus, setPickerStatus] = useState(null); // null=非表示 / "仮" / "確定" = 追加するセッションの種類
+  const baseCandidates = pickerStatus === "確定" ? draftSessions : projectSessions;
+  const [sessionDateDraft, setSessionDateDraft] = useState("");
 
   // baseSessionId を渡すと、そのセッションの明細をコピーして作る(購入・入稿の進捗は空に戻す)
   const addSession = (status, baseSessionId) => {
@@ -68,7 +69,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
     }
     setSessions((prev) => [...prev, newSession]);
     setActiveSessionId(id);
-    setShowBasePicker(false);
+    setPickerStatus(null);
   };
 
   const deleteSession = (id) => {
@@ -91,19 +92,15 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
 
   const startEditSession = (s) => {
     setSessionLabelDraft(s.label);
+    setSessionDateDraft(s.date || "");
     setEditingSessionId(s.id);
   };
 
   const renameSession = (id) => {
     const label = sessionLabelDraft.trim();
     if (label) {
-      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, label } : s)));
+      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, label, date: sessionDateDraft || s.date } : s)));
     }
-    setEditingSessionId(null);
-  };
-
-  const cancelEditSession = () => {
-    skipBlurSave.current = true;
     setEditingSessionId(null);
   };
 
@@ -142,30 +139,33 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
             }`}
           >
             {editingSessionId === s.id ? (
-              <input
-                autoFocus
-                value={sessionLabelDraft}
-                onChange={(e) => setSessionLabelDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                  if (e.key === "Escape") cancelEditSession();
-                }}
-                onBlur={() => {
-                  if (skipBlurSave.current) {
-                    skipBlurSave.current = false;
-                    return;
-                  }
-                  renameSession(s.id);
-                }}
-                className="text-sm bg-transparent border-b border-[var(--accent)] outline-none w-28"
-              />
+              <div className="flex items-center gap-1.5 flex-wrap py-0.5">
+                <input
+                  autoFocus
+                  value={sessionLabelDraft}
+                  onChange={(e) => setSessionLabelDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") renameSession(s.id);
+                    if (e.key === "Escape") setEditingSessionId(null);
+                  }}
+                  className="text-sm bg-transparent border-b border-[var(--accent)] outline-none w-28"
+                />
+                <input
+                  type="date"
+                  value={sessionDateDraft}
+                  onChange={(e) => setSessionDateDraft(e.target.value)}
+                  className="text-xs bg-transparent border-b border-[var(--accent)] outline-none"
+                />
+                <button onClick={() => renameSession(s.id)} className="text-xs px-2 py-0.5 border border-[var(--accent)] text-[var(--accent)] rounded">保存</button>
+                <button onClick={() => setEditingSessionId(null)} className="text-xs px-2 py-0.5 border border-[var(--border)] rounded">取消</button>
+              </div>
             ) : (
               <button onClick={() => setActiveSessionId(s.id)} className="flex items-center gap-1">
                 {s.label} <span className="text-xs text-[var(--text-muted)]">{s.date}</span>
               </button>
             )}
             {editingSessionId !== s.id && (
-              <button onClick={() => startEditSession(s)} title="タイトルを編集" className="text-[var(--text-muted)] hover:text-[var(--accent)] rounded p-0.5">
+              <button onClick={() => startEditSession(s)} title="タイトル・日付を編集" className="text-[var(--text-muted)] hover:text-[var(--accent)] rounded p-0.5">
                 <Pencil size={12} />
               </button>
             )}
@@ -174,11 +174,11 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
             </button>
           </div>
         ))}
-        <button onClick={() => addSession("仮")} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
+        <button onClick={() => (projectSessions.length > 0 ? setPickerStatus("仮") : addSession("仮"))} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]">
           <Plus size={14} /> 仮見積もりを追加
         </button>
         <button
-          onClick={() => (draftSessions.length > 0 ? setShowBasePicker(true) : addSession("確定"))}
+          onClick={() => (draftSessions.length > 0 ? setPickerStatus("確定") : addSession("確定"))}
           className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
           <Plus size={14} /> 確定見積もりを追加
         </button>
@@ -188,19 +188,19 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
         <p className="text-xs text-[var(--text-muted)] -mt-2">「{activeSession.baseLabel}」をベースに作成</p>
       )}
 
-      {showBasePicker && (
+      {pickerStatus && (
         <Modal>
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
-            <p className="text-sm font-medium text-[var(--ink)]">確定見積もりのベースを選んでください</p>
-            <p className="text-xs text-[var(--text-muted)]">選んだ仮見積もりの明細をコピーして作ります。コピー後に自由に直せます(元の仮見積もりは変わりません)。</p>
+            <p className="text-sm font-medium text-[var(--ink)]">{pickerStatus}見積もりのベースを選んでください</p>
+            <p className="text-xs text-[var(--text-muted)]">選んだ見積もりの明細をコピーして作ります。コピー後に自由に直せます(元の見積もりは変わりません)。</p>
             <div className="space-y-2">
-              {draftSessions.map((d) => {
+              {baseCandidates.map((d) => {
                 const count = lineItems.filter((it) => it.sessionId === d.id).length;
                 const sum = lineItems.filter((it) => it.sessionId === d.id).reduce((t, it) => t + it.amount, 0);
                 return (
                   <button
                     key={d.id}
-                    onClick={() => addSession("確定", d.id)}
+                    onClick={() => addSession(pickerStatus, d.id)}
                     className="w-full text-left border border-[var(--border)] rounded-md px-3 py-2 hover:border-[var(--accent)] flex justify-between items-center gap-2"
                   >
                     <span className="text-sm text-[var(--ink)]">{d.label} <span className="text-xs text-[var(--text-muted)]">{d.date}</span></span>
@@ -209,14 +209,14 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                 );
               })}
               <button
-                onClick={() => addSession("確定")}
+                onClick={() => addSession(pickerStatus)}
                 className="w-full text-left border border-dashed border-[var(--border)] rounded-md px-3 py-2 text-sm text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
               >
                 空の状態から作る
               </button>
             </div>
             <div className="flex justify-end">
-              <button onClick={() => setShowBasePicker(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">キャンセル</button>
+              <button onClick={() => setPickerStatus(null)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">キャンセル</button>
             </div>
           </div>
         </Modal>
