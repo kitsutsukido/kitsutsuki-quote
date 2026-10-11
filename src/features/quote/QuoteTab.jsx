@@ -85,19 +85,26 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
     setEditingSessionId(null);
   };
 
+  // 明細1行。PCは横並びの表風、スマホは「名称・金額・編集」「仕様＋部数×単価」の2段
   const row = (it) => (
-    <tr key={it.id} className="border-b border-[var(--border)] last:border-0 group">
-      <td className="py-1.5 pl-3 w-1/4">{it.name}</td>
-      <td className="py-1.5 text-[var(--text-muted)]">{specString(it)}</td>
-      <td className="py-1.5 text-right w-16 font-mono">{it.qty}</td>
-      <td className="py-1.5 text-right w-20 font-mono">{(it.amount / it.qty).toFixed(1)}円</td>
-      <td className="py-1.5 text-right w-24 font-mono">{it.amount.toLocaleString()}円</td>
-      <td className="py-1.5 pl-2 w-14 text-right">
-        <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2" title="編集">
+    <div
+      key={it.id}
+      className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[25%_1fr_4rem_5rem_6rem_3.5rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0"
+    >
+      <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">{it.name}</span>
+      <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
+        {specString(it)}
+        <span className="md:hidden font-mono"> ・{it.qty}部 × {(it.amount / it.qty).toFixed(1)}円</span>
+      </span>
+      <span className="hidden md:block text-right font-mono">{it.qty}</span>
+      <span className="hidden md:block text-right font-mono">{(it.amount / it.qty).toFixed(1)}円</span>
+      <span className="col-start-2 row-start-1 md:col-start-5 md:row-auto text-right font-mono">{it.amount.toLocaleString()}円</span>
+      <span className="col-start-3 row-start-1 md:col-auto md:row-auto md:pl-2 text-right">
+        <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2 whitespace-nowrap" title="編集">
           編集
         </button>
-      </td>
-    </tr>
+      </span>
+    </div>
   );
 
   return (
@@ -178,9 +185,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
                 <>
                   {header}
                   {directItems.length > 0 && (
-                    <table className="w-full text-sm">
-                      <tbody>{directItems.map(row)}</tbody>
-                    </table>
+                    <div className="text-sm">{directItems.map(row)}</div>
                   )}
                   {children.length > 0 && (
                     <div className="mt-2 ml-3 pl-3 border-l-2 border-[var(--border)] space-y-2">{children.map(renderNode)}</div>
@@ -194,9 +199,7 @@ export function QuoteTab({ project, projects, sessions, setSessions, groups, set
               );
             })}
             {ungrouped.length > 0 && (
-              <table className="w-full text-sm">
-                <tbody>{ungrouped.map(row)}</tbody>
-              </table>
+              <div className="text-sm">{ungrouped.map(row)}</div>
             )}
             <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
               <span className="text-sm font-medium">経費合計</span>
