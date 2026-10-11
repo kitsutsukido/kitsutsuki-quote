@@ -1,7 +1,3 @@
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Field } from "../../components/common/Field.jsx";
-import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven } from "../../lib/breakeven.js";
 import { GroupManager } from "./GroupManager.jsx";
 
@@ -19,10 +15,7 @@ function findLatestConfirmedLot(product, projects, sessions) {
 }
 
 // ---------- 商品サマリー画面 ----------
-export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot }) {
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ round: "", qty: "500" });
-
+export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject }) {
   const productProjects = projects.filter((p) => p.productId === product.id);
   const latest = findLatestConfirmedLot(product, projects, sessions);
 
@@ -41,14 +34,6 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
       margin = row.margin;
     }
   }
-
-  const submit = () => {
-    const round = form.round.trim();
-    if (!round) return;
-    registerLot(product.id, round, form.qty);
-    setShowForm(false);
-    setForm({ round: "", qty: "500" });
-  };
 
   return (
     <div className="space-y-4">
@@ -69,45 +54,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-[var(--ink)]">ロット一覧</p>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1"
-        >
-          <Plus size={14} /> 増刷を登録
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3 max-w-sm">
-          <Field label="ロット名">
-            <input
-              className={inputCls}
-              placeholder="例：2026年12月ロット"
-              value={form.round}
-              onChange={(e) => setForm((f) => ({ ...f, round: e.target.value }))}
-              autoFocus
-            />
-          </Field>
-          <Field label="印刷部数">
-            <input
-              type="number"
-              className={inputCls}
-              value={form.qty}
-              onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
-            />
-          </Field>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md text-[var(--text)]">
-              キャンセル
-            </button>
-            <button onClick={submit} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">
-              登録
-            </button>
-          </div>
-        </div>
-      )}
+      <p className="text-sm font-medium text-[var(--ink)]">ロット一覧</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {productProjects.map((p) => (

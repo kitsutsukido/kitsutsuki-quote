@@ -1,9 +1,21 @@
 import { useState } from "react";
 import { Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Field } from "../../components/common/Field.jsx";
+import { inputCls } from "../../components/common/inputStyles.js";
 
 // ---------- サイドバー(ジャンル > 商品 > 案件の3階層、既存/新規タブ) ----------
-export function Sidebar({ products, projects, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onCreateNew }) {
+export function Sidebar({ products, projects, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onRegisterLot }) {
   const [sideTab, setSideTab] = useState("existing"); // existing | new
+  const [lotForm, setLotForm] = useState({ productId: "", round: "", qty: "500" });
+  const lotProductId = lotForm.productId || selectedProductId || products.find((p) => p.id === projects.find((x) => x.id === selectedId)?.productId)?.id || products[0]?.id || "";
+
+  const submitLot = () => {
+    const round = lotForm.round.trim();
+    if (!round || !lotProductId) return;
+    onRegisterLot(lotProductId, round, lotForm.qty);
+    setLotForm({ productId: "", round: "", qty: "500" });
+    setSideTab("existing");
+  };
 
   const genres = [];
   for (const prod of products) {
@@ -128,10 +140,34 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
           })}
         </div>
       ) : (
-        <div className="px-1 space-y-2">
-          <p className="text-xs text-[var(--text-muted)]">まったく新しい商品を作成します。増刷(新しいロット)は、既存の商品を開いて「増刷を登録」から追加してください。</p>
-          <button onClick={onCreateNew} className="w-full text-sm px-3 py-2 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center justify-center gap-1">
-            <Plus size={14} /> 新規商品を作成
+        <div className="px-1 space-y-3">
+          <p className="text-xs text-[var(--text-muted)]">既存の商品に、新しい印刷ロット(増刷)を追加します。</p>
+          <Field label="商品">
+            <select className={inputCls} value={lotProductId} onChange={(e) => setLotForm((f) => ({ ...f, productId: e.target.value }))}>
+              {products.map((prod) => (
+                <option key={prod.id} value={prod.id}>{prod.name}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="ロット名">
+            <input
+              className={inputCls}
+              placeholder="例：2026年12月ロット"
+              value={lotForm.round}
+              onChange={(e) => setLotForm((f) => ({ ...f, round: e.target.value }))}
+              onKeyDown={(e) => { if (e.key === "Enter") submitLot(); }}
+            />
+          </Field>
+          <Field label="印刷部数">
+            <input
+              type="number"
+              className={inputCls}
+              value={lotForm.qty}
+              onChange={(e) => setLotForm((f) => ({ ...f, qty: e.target.value }))}
+            />
+          </Field>
+          <button onClick={submitLot} className="w-full text-sm px-3 py-2 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center justify-center gap-1">
+            <Plus size={14} /> 増刷を登録
           </button>
         </div>
       )}

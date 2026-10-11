@@ -97,7 +97,7 @@ export default function App() {
             setView={(v) => { setView(v); setMenuOpen(false); }}
             setSelectedId={(id) => { setSelectedId(id); setMenuOpen(false); }}
             onOpenProduct={(id) => { openProductOverview(id); setMenuOpen(false); }}
-            onCreateNew={() => {}}
+            onRegisterLot={(productId, round, qty) => { registerLot(productId, round, qty); setMenuOpen(false); }}
           />
         </div>
 
@@ -124,7 +124,6 @@ export default function App() {
               settings={settings}
               patterns={patterns}
               onOpenProject={(id) => { setSelectedId(id); setView("project"); }}
-              registerLot={registerLot}
             />
           )}
 
