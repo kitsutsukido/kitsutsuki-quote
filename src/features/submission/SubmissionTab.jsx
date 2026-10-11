@@ -1,5 +1,5 @@
 import { Upload, Undo2 } from "lucide-react";
-import { specString } from "../../lib/spec.js";
+import { specString, isMaterial } from "../../lib/spec.js";
 
 // ---------- 入稿管理タブ ----------
 export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
@@ -75,7 +75,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
             </div>
             <p className="text-xs text-[var(--text-muted)]">{specString(it)}</p>
             <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-[var(--text-muted)]">入稿先: <span className="text-[var(--text)]">{it.submitTo || "―"}</span></span>
+              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span></span>
               <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
             </div>
             {submitControl(it)}
@@ -88,7 +88,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left">
-              <th className="py-2 px-3 font-normal whitespace-nowrap">入稿先</th>
+              <th className="py-2 px-3 font-normal whitespace-nowrap">印刷・購入場所</th>
               <th className="py-2 px-3 font-normal">内容</th>
               <th className="py-2 px-3 font-normal">仕様</th>
               <th className="py-2 px-3 font-normal text-right whitespace-nowrap">部数</th>

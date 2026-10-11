@@ -194,7 +194,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         {material && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="サイズ(規格)"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A5用" /></Field>
+              <Field label="商品名"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="例：OPP袋 A5用(テープなし)" /></Field>
               <Field label="テープ">
                 <select className={inputCls} value={form.tape || "なし"} onChange={set("tape")}>
                   {TAPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -264,7 +264,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       <div className="grid grid-cols-3 gap-3">
         <Field label={material ? "必要数" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
-        <Field label="入稿先"><input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder="プリントパック" /></Field>
+        <Field label={material ? "購入場所" : "印刷場所"}><input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder={material ? "シモジマ" : "プリントパック"} /></Field>
       </div>
 
       <div className="flex justify-between items-center pt-2">
