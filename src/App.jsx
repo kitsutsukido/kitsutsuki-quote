@@ -132,7 +132,13 @@ export default function App() {
 
           {view === "project" && (
             <>
-              <p className="text-lg font-medium mb-1 text-[var(--ink)]">{product.name}</p>
+              <button
+                onClick={() => openProductOverview(product.id)}
+                title="この商品のダッシュボードへ"
+                className="text-lg font-medium mb-1 text-[var(--ink)] text-left hover:text-[var(--accent)] hover:underline underline-offset-4"
+              >
+                {product.name}
+              </button>
               <p className="text-sm text-[var(--text-muted)] mb-4">{project.round}・印刷部数 {project.qty}部</p>
 
               <div className="flex gap-1 border-b border-[var(--border)] mb-4">
