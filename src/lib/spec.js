@@ -15,6 +15,7 @@ export function specString(item) {
     colors,
     item.paper ? `${item.paper}${item.weight || ""}` : item.weight,
     item.paperColor ? `紙色:${item.paperColor}` : "",
+    item.inkColor ? `インク:${item.inkColor}` : "",
     ...(item.processes || []),
   ].filter(Boolean);
   return parts.join(" ");
