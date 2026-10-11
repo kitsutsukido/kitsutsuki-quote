@@ -38,9 +38,10 @@ export const initialSessions = [
   { id: "qs4", projectId: "prj-trump", label: "仮見積もり①", date: "2026-02-01", status: "仮" },
 ];
 
-let lineItemSeq = 1;
+// 明細idは再読込しても他と重ならないよう、時刻+乱数で作る(連番だと再読込でリセットされて重複する)
+const newLineItemId = () => `qli-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 export const createLineItem = (fields) => ({
-  id: `qli-${lineItemSeq++}`,
+  id: newLineItemId(),
   sessionId: "qs5",
   kind: "print", // print(印刷物) | material(資材)
   groupId: null,
