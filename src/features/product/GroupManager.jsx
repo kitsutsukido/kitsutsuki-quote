@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
@@ -132,7 +132,19 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
     </div>
   );
 
-  const renderNode = ({ group, depth, children }) => {
+  // 同じ親の中で、隣のグループと並びを入れ替える(配列内の位置を交換する)
+  const moveGroup = (group, neighbor) => {
+    setGroups((prev) => {
+      const a = prev.findIndex((g) => g.id === group.id);
+      const b = prev.findIndex((g) => g.id === neighbor.id);
+      if (a < 0 || b < 0) return prev;
+      const next = [...prev];
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  };
+
+  const renderNode = ({ group, depth, children }, index, siblings) => {
     const c = GROUP_COLORS[colorForDepth(depth)];
     const parentOptions = selectableParents(productGroups, group.id);
     const row = (
@@ -144,6 +156,22 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
           <>
             <span className={`order-1 flex-1 basis-0 min-w-[5rem] break-words text-sm ${depth === 0 ? "font-medium" : ""}`}>{group.name}</span>
             <div className="order-2 md:order-3 flex items-center shrink-0">
+              <button
+                onClick={() => moveGroup(group, siblings[index - 1].group)}
+                disabled={index === 0}
+                title="上へ"
+                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] rounded disabled:opacity-25 disabled:hover:text-[var(--text-muted)]"
+              >
+                <ChevronUp size={15} />
+              </button>
+              <button
+                onClick={() => moveGroup(group, siblings[index + 1].group)}
+                disabled={index === siblings.length - 1}
+                title="下へ"
+                className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] rounded disabled:opacity-25 disabled:hover:text-[var(--text-muted)]"
+              >
+                <ChevronDown size={15} />
+              </button>
               <button onClick={() => startEdit(group)} title="編集" className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] rounded">
                 <Pencil size={14} />
               </button>
