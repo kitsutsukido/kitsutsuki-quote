@@ -29,7 +29,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
       .filter((s) => s.projectId === p.id && s.status === "確定")
       .map((s) => ({
         id: s.id,
-        text: `${p.round} ${s.label}(${s.date}・${lineItems.filter((it) => it.sessionId === s.id).reduce((t, it) => t + it.amount, 0).toLocaleString()}円)`,
+        text: `${p.round} ${s.label}(${(s.date || "").slice(0, 7)}・${lineItems.filter((it) => it.sessionId === s.id).reduce((t, it) => t + it.amount, 0).toLocaleString()}円)`,
       }))
   );
   const latest = findLatestConfirmedLot(product, projects, sessions);

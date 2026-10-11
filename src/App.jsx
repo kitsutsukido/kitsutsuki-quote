@@ -85,7 +85,7 @@ export default function App() {
       const baseLabel = `${baseProject ? baseProject.round + " " : ""}${base.label}`;
       setSessions((prev) => [
         ...prev,
-        { id: sid, projectId: newProject.id, label: "確定見積もり", date: new Date().toISOString().slice(0, 10), status: "確定", baseSessionId: base.id, baseLabel },
+        { id: sid, projectId: newProject.id, label: "確定見積もり", date: new Date().toISOString().slice(0, 7), status: "確定", baseSessionId: base.id, baseLabel },
       ]);
       const copies = lineItems
         .filter((it) => it.sessionId === base.id)
