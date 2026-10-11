@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, X, Pencil } from "lucide-react";
+import { Plus, X, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { specString } from "../../lib/spec.js";
@@ -120,10 +120,22 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
   };
 
   // 明細1行。PCは横並びの表風、スマホは「名称・金額・編集」「仕様＋部数×単価」の2段
-  const row = (it) => (
+  // 同じグループの中で、隣の明細と並びを入れ替える(配列内の位置を交換する)
+  const moveItem = (it, neighbor) => {
+    setLineItems((prev) => {
+      const a = prev.findIndex((x) => x.id === it.id);
+      const b = prev.findIndex((x) => x.id === neighbor.id);
+      if (a < 0 || b < 0) return prev;
+      const next = [...prev];
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  };
+
+  const row = (it, index, siblings) => (
     <div
       key={it.id}
-      className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[25%_1fr_7rem_4rem_5rem_6rem_3.5rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0"
+      className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[25%_1fr_7rem_4rem_5rem_6rem_6rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0"
     >
       <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">{it.name}</span>
       <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
@@ -135,7 +147,13 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
       <span className="hidden md:block text-right font-mono">{it.qty}</span>
       <span className="hidden md:block text-right font-mono">{(it.amount / it.qty).toFixed(1)}円</span>
       <span className="col-start-2 row-start-1 md:col-start-6 md:row-auto text-right font-mono">{it.amount.toLocaleString()}円</span>
-      <span className="col-start-3 row-start-1 md:col-auto md:row-auto md:pl-2 text-right">
+      <span className="col-start-3 row-start-1 md:col-auto md:row-auto md:pl-2 text-right whitespace-nowrap">
+        <button onClick={() => moveItem(it, siblings[index - 1])} disabled={index === 0} title="上へ" className="align-middle p-1 text-[var(--text-muted)] hover:text-[var(--accent)] disabled:opacity-25 disabled:hover:text-[var(--text-muted)]">
+          <ChevronUp size={15} />
+        </button>
+        <button onClick={() => moveItem(it, siblings[index + 1])} disabled={index === siblings.length - 1} title="下へ" className="align-middle p-1 mr-1 text-[var(--text-muted)] hover:text-[var(--accent)] disabled:opacity-25 disabled:hover:text-[var(--text-muted)]">
+          <ChevronDown size={15} />
+        </button>
         <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2 whitespace-nowrap" title="編集">
           編集
         </button>
