@@ -68,7 +68,8 @@ export default function App() {
     setView("productOverview");
   };
 
-  const registerLot = (productId, round, qty) => {
+  // baseSessionId を渡すと、その確定見積もりの明細をコピーした確定見積もりを新ロットに作る
+  const registerLot = (productId, round, qty, baseSessionId) => {
     const newProject = {
       id: `prj-${Date.now()}`,
       productId,
@@ -77,6 +78,27 @@ export default function App() {
       status: "進行中",
     };
     setProjects((prev) => [...prev, newProject]);
+    const base = baseSessionId ? sessions.find((x) => x.id === baseSessionId) : null;
+    if (base) {
+      const sid = `qs-${Date.now()}`;
+      const baseProject = projects.find((p) => p.id === base.projectId);
+      const baseLabel = `${baseProject ? baseProject.round + " " : ""}${base.label}`;
+      setSessions((prev) => [
+        ...prev,
+        { id: sid, projectId: newProject.id, label: "確定見積もり", date: new Date().toISOString().slice(0, 10), status: "確定", baseSessionId: base.id, baseLabel },
+      ]);
+      const copies = lineItems
+        .filter((it) => it.sessionId === base.id)
+        .map((it, i) => ({
+          ...it,
+          id: `qli-${Date.now()}-${i}`,
+          sessionId: sid,
+          processes: [...(it.processes || [])],
+          purchaseStatus: "未",
+          actualDate: "",
+        }));
+      setLineItems((prev) => [...prev, ...copies]);
+    }
     setSelectedId(newProject.id);
     setView("project");
   };
