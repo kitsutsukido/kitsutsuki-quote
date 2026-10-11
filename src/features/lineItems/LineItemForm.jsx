@@ -3,7 +3,7 @@ import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { Chip } from "../../components/common/Chip.jsx";
-import { specString, isMaterial, materialTotalQty, TAPE_OPTIONS, KIND_PRINT, KIND_MATERIAL } from "../../lib/spec.js";
+import { specString, isMaterial, KIND_PRINT, KIND_MATERIAL } from "../../lib/spec.js";
 import { createLineItem } from "../../data/seedData.js";
 import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
@@ -20,17 +20,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  // 資材の「1パック価格 × パック数」から金額(合計)を自動計算する(金額欄は手で直してもよい)
-  const setMaterial = (k) => (e) => {
-    const next = { ...form, [k]: e.target.value };
-    if (Number(next.packPrice) > 0 && Number(next.packCount) > 0) {
-      next.amount = Number(next.packPrice) * Number(next.packCount);
-    }
-    setForm(next);
-  };
   const material = isMaterial(form);
-  const totalQty = materialTotalQty(form);
-  const needQty = Number(form.qty) || 0;
 
   const openNewGroupForm = () => {
     setGroupForm(groupFormDefaults);
@@ -193,25 +183,8 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         <p className="text-xs text-[var(--text-muted)]">仕様</p>
         {material && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="商品名"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="例：OPP袋 A5用(テープなし)" /></Field>
-              <Field label="テープ">
-                <select className={inputCls} value={form.tape || "なし"} onChange={set("tape")}>
-                  {TAPE_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </Field>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="入数(枚/パック)"><input type="number" className={inputCls} value={form.packSize} onChange={setMaterial("packSize")} placeholder="100" /></Field>
-              <Field label="購入パック数"><input type="number" className={inputCls} value={form.packCount} onChange={setMaterial("packCount")} placeholder="5" /></Field>
-              <Field label="1パックの価格"><input type="number" className={inputCls} value={form.packPrice} onChange={setMaterial("packPrice")} placeholder="1000" /></Field>
-            </div>
-            {totalQty && (
-              <p className={`text-xs ${totalQty < needQty ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
-                購入 {totalQty.toLocaleString()}枚 / 必要 {needQty.toLocaleString()}枚 →{" "}
-                {totalQty >= needQty ? `余り ${(totalQty - needQty).toLocaleString()}枚` : `不足 ${(needQty - totalQty).toLocaleString()}枚`}
-              </p>
-            )}
+            <Field label="商品名"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="例：SWAN OPP袋 ピュアパック T16-22.5(A5用)" /></Field>
+            <Field label="備考"><input className={inputCls} value={form.note || ""} onChange={set("note")} placeholder="例：本体テープ付き・100枚入×5パック" /></Field>
           </>
         )}
         {!material && (
@@ -262,7 +235,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Field label={material ? "必要数" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
+        <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
         <Field label={material ? "購入場所" : "印刷場所"}><input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder={material ? "シモジマ" : "プリントパック"} /></Field>
       </div>
