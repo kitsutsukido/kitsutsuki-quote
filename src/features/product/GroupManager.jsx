@@ -114,43 +114,47 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
     const c = GROUP_COLORS[colorForDepth(depth)];
     const parentOptions = selectableParents(productGroups, group.id);
     const row = (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
         <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${c.chip.split(" ")[0]}`} />
         {editingId === group.id ? (
           renderEditRow(group)
         ) : (
           <>
-            <span className={`text-sm flex-1 min-w-[6rem] ${depth === 0 ? "font-medium" : ""}`}>{group.name}</span>
-            <select
-              value={group.parentId || ""}
-              onChange={(e) => changeParent(group, e.target.value)}
-              title="入れる先(親)を変更"
-              className="text-xs border border-[var(--border)] rounded-md px-1.5 py-1 bg-[var(--card)] text-[var(--text)] max-w-[10rem]"
-            >
-              <option value="">(最上位)</option>
-              {parentOptions.map((o) => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => startAdd(group.id)}
-              title="このグループの中に追加"
-              className="text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
-            >
-              <Plus size={12} /> 中に追加
-            </button>
-            <button onClick={() => startEdit(group)} title="編集" className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)] rounded">
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => deleteGroup(group)} title="削除" className="p-1 text-[var(--text-muted)] hover:text-[var(--danger)] rounded">
-              <Trash2 size={14} />
-            </button>
+            <span className={`order-1 flex-1 basis-0 min-w-[5rem] break-words text-sm ${depth === 0 ? "font-medium" : ""}`}>{group.name}</span>
+            <div className="order-2 md:order-3 flex items-center shrink-0">
+              <button onClick={() => startEdit(group)} title="編集" className="p-1.5 text-[var(--text-muted)] hover:text-[var(--accent)] rounded">
+                <Pencil size={14} />
+              </button>
+              <button onClick={() => deleteGroup(group)} title="削除" className="p-1.5 text-[var(--text-muted)] hover:text-[var(--danger)] rounded">
+                <Trash2 size={14} />
+              </button>
+            </div>
+            <div className="order-3 md:order-2 w-full md:w-auto flex items-center gap-2">
+              <select
+                value={group.parentId || ""}
+                onChange={(e) => changeParent(group, e.target.value)}
+                title="入れる先(親)を変更"
+                className="flex-1 md:flex-none min-w-0 text-xs border border-[var(--border)] rounded-md px-1.5 py-1 bg-[var(--card)] text-[var(--text)] md:max-w-[10rem]"
+              >
+                <option value="">(最上位)</option>
+                {parentOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => startAdd(group.id)}
+                title="このグループの中に追加"
+                className="shrink-0 whitespace-nowrap text-xs px-2 py-1 rounded-md border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] flex items-center gap-1"
+              >
+                <Plus size={12} /> 中に追加
+              </button>
+            </div>
           </>
         )}
       </div>
     );
     const nested = (children.length > 0 || addingParent === group.id) && (
-      <div className="ml-3 mt-1.5 pl-3 border-l-2 border-[var(--border)] space-y-1.5">
+      <div className="ml-2 md:ml-3 mt-1.5 pl-2 md:pl-3 border-l-2 border-[var(--border)] space-y-1.5">
         {children.map(renderNode)}
         {addingParent === group.id && (
           <div className="border border-dashed border-[var(--border)] rounded-md p-2">{renderNewRow(group.id)}</div>
@@ -191,7 +195,7 @@ export function GroupManager({ productId, groups, setGroups, lineItems, setLineI
         <p className="text-sm text-[var(--text-muted)]">梱包グループがまだありません。「外側の梱包を追加」から作成してください。</p>
       )}
 
-      <p className="text-xs text-[var(--text-muted)]">グループの「中に追加」で、何階層でも入れ子にできます。入れる先は右のプルダウンでいつでも変えられます。</p>
+      <p className="text-xs text-[var(--text-muted)]">グループの「中に追加」で、何階層でも入れ子にできます。入れる先はプルダウンでいつでも変えられます。</p>
 
       <div className="space-y-3">{tree.map(renderNode)}</div>
     </div>
