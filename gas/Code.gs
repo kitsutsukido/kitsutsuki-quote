@@ -19,19 +19,24 @@
  *    (これは在庫アプリのデプロイとは別の、新規のデプロイになる)
  * 7. 発行された「ウェブアプリのURL」を見積もりアプリ側の設定に使う
  *
- * 合言葉: 上の SHARED_SECRET に推測されにくい文字列を設定してからデプロイし、
- * 同じ文字列を見積もりアプリの設定画面の「合言葉」欄にも入れる(設定を変えたら再デプロイ)。
+ * 合言葉: スクリプト プロパティ SHARED_SECRET に推測されにくい文字列を設定し(下のコメント参照)、
+ * 同じ文字列を見積もりアプリの設定画面の「合言葉」欄にも入れる。
  */
 
-// 合言葉(共有シークレット)。ウェブアプリのURLが漏れても、この合言葉を知らない
-// 相手からのリクエストは拒否する。デプロイ前に必ず推測されにくい文字列へ書き換え、
-// 見積もりアプリの「設定・連携」画面の同じシリーズの「合言葉」欄に同じ文字列を入れること。
-// 空文字のままだとチェックを行わない(誰でもアクセス可能になるので非推奨)。
-const SHARED_SECRET = "";
+// 合言葉(共有シークレット)は、コードには書かず Apps Script の「スクリプト プロパティ」に保存する。
+// (このコードを貼り替えても、合言葉を入れ直さずに済む。コードをGitHub等に置いても合言葉は漏れない)
+// 設定: 左の歯車「プロジェクトの設定」→ 一番下の「スクリプト プロパティ」→「スクリプト プロパティを追加」
+//       プロパティ: SHARED_SECRET / 値: 推測されにくい文字列(見積もりアプリの「合言葉」欄と同じもの)
+// 設定を変えたら再デプロイは不要(次のリクエストから反映される)。
+// 未設定の場合は安全のため、すべてのリクエストを拒否する。
+function getSharedSecret_() {
+  return PropertiesService.getScriptProperties().getProperty("SHARED_SECRET") || "";
+}
 
 function isAuthorized_(secret) {
-  if (!SHARED_SECRET) return true;
-  return String(secret || "") === SHARED_SECRET;
+  const expected = getSharedSecret_();
+  if (!expected) return false;
+  return String(secret || "") === expected;
 }
 
 function unauthorized_() {

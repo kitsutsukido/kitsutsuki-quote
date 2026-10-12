@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { X, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { X, Plus, ChevronRight, ChevronDown, Copy } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { RelatedAppsSettings } from "../relatedApps/RelatedAppsSettings.jsx";
 import { SheetUrlsSettings } from "./SheetUrlsSettings.jsx";
 import { BackupSettings } from "./BackupSettings.jsx";
+import gasCode from "../../../gas/Code.gs?raw";
 
 const STORAGE_KEY = "zk-quote:settings";
 
@@ -36,6 +37,18 @@ export function Settings({ products, sync }) {
   const [settings, setSettings] = useState(() => loadSettings());
   const [emailInput, setEmailInput] = useState("");
   const [showCodeSection, setShowCodeSection] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Apps Script に貼り付けるコード(gas/Code.gs)をクリップボードにコピーする
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(gasCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch (e) {
+      window.alert("コピーできませんでした。下のコード欄を長押し(選択)してコピーしてください。");
+    }
+  };
 
   useEffect(() => {
     saveSettings(settings);
@@ -112,12 +125,21 @@ export function Settings({ products, sync }) {
             <li>シリーズ(ジャンル)ごとに、連携させたいGoogleスプレッドシートを開く</li>
             <li>拡張機能 → Apps Script を開く</li>
             <li>新しいスクリプトファイルを追加する(在庫アプリ用の既存コードは上書きしない)</li>
-            <li>リポジトリの <code className="font-mono">gas/Code.gs</code> の内容を貼り付けて保存する</li>
+            <li>下の「コードをコピー」で、Apps Script 用のコードをコピーして貼り付け、保存する(コードの編集は不要)</li>
+            <li>左の歯車「プロジェクトの設定」→ 一番下の「スクリプト プロパティ」で、プロパティ <code className="font-mono">SHARED_SECRET</code>、値に合言葉を追加する(アプリの合言葉欄と同じ文字列)</li>
             <li>デプロイ → 新しいデプロイ → 種類「ウェブアプリ」を選ぶ</li>
             <li>アクセスできるユーザーを「全員」にしてデプロイする</li>
             <li>発行された「ウェブアプリのURL」を上の、該当するシリーズの欄に貼り付けて保存する</li>
             <li>この手順を、シリーズの数だけ繰り返す(スプレッドシート・デプロイともにシリーズごとに別々に用意する)</li>
           </ol>
+        )}
+        {showCodeSection && (
+          <div className="mt-3 space-y-2">
+            <button onClick={copyCode} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
+              <Copy size={14} /> {copied ? "コピーしました" : "コードをコピー"}
+            </button>
+            <textarea readOnly value={gasCode} rows={6} className="w-full text-xs font-mono border border-[var(--border)] rounded-md p-2 bg-[var(--paper)]" />
+          </div>
         )}
       </div>
 
