@@ -74,6 +74,13 @@ function writeArrayToSheet_(sheetName, arr, legacyNames) {
   const headers = [];
   arr.forEach((obj) => Object.keys(obj).forEach((k) => { if (headers.indexOf(k) === -1) headers.push(k); }));
   const rows = arr.map((obj) => headers.map((h) => (obj[h] === undefined ? "" : obj[h])));
+  // 全行が文字列の列は「書式なしテキスト」にして、「2025-10」「2026-04-02」のような値が日付に自動変換されないようにする
+  headers.forEach((h, c) => {
+    const vals = rows.map((r) => r[c]).filter((v) => v !== "");
+    if (vals.length > 0 && vals.every((v) => typeof v === "string")) {
+      sh.getRange(2, c + 1, rows.length, 1).setNumberFormat("@");
+    }
+  });
   sh.getRange(1, 1, 1, headers.length).setValues([headers]);
   sh.getRange(2, 1, rows.length, headers.length).setValues(rows);
 }
@@ -92,7 +99,14 @@ function readSheetAsArray_(sheetName, legacyNames) {
   const headers = values[0];
   return values.slice(1).map((row) => {
     const obj = {};
-    headers.forEach((h, i) => (obj[h] = row[i]));
+    headers.forEach((h, i) => {
+      let v = row[i];
+      // 念のため、日付に変換されてしまったセルは文字列に戻す(見積もりの日付は年月、その他は年月日)
+      if (v instanceof Date) {
+        v = Utilities.formatDate(v, Session.getScriptTimeZone(), h === "date" ? "yyyy-MM" : "yyyy-MM-dd");
+      }
+      obj[h] = v;
+    });
     return obj;
   });
 }
