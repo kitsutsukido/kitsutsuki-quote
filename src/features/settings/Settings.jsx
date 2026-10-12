@@ -32,7 +32,7 @@ function saveSettings(settings) {
 }
 
 // ---------- 設定・連携画面 ----------
-export function Settings({ products }) {
+export function Settings({ products, sync }) {
   const [settings, setSettings] = useState(() => loadSettings());
   const [emailInput, setEmailInput] = useState("");
   const [showCodeSection, setShowCodeSection] = useState(false);
@@ -97,7 +97,7 @@ export function Settings({ products }) {
 
       <p className="text-sm font-medium text-[var(--ink)] pt-2">Google スプレッドシート連携</p>
 
-      <SheetUrlsSettings products={products} />
+      <SheetUrlsSettings products={products} sync={sync} />
 
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
         <button

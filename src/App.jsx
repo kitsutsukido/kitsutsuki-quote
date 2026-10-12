@@ -152,7 +152,7 @@ export default function App() {
             />
           )}
 
-          {view === "settings" && <Settings products={products} />}
+          {view === "settings" && <Settings products={products} sync={{ projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (
             <>
