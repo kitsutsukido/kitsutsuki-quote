@@ -4,6 +4,7 @@ import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { RelatedAppsSettings } from "../relatedApps/RelatedAppsSettings.jsx";
 import { SheetUrlsSettings } from "./SheetUrlsSettings.jsx";
+import { BackupSettings } from "./BackupSettings.jsx";
 
 const STORAGE_KEY = "zk-quote:settings";
 
@@ -91,6 +92,8 @@ export function Settings({ products }) {
           <button className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">保存</button>
         </div>
       </div>
+
+      <BackupSettings />
 
       <p className="text-sm font-medium text-[var(--ink)] pt-2">Google スプレッドシート連携</p>
 
