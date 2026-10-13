@@ -29,3 +29,16 @@ npm install
 npm run dev      # 開発サーバー
 npm run build    # 本番ビルド
 ```
+
+## ログインと設定の共有(Cloudflare Workers + KV)
+
+スプレッドシートのURL・合言葉は、Googleログインすると全部の端末で共有されます(見積もりなどのデータ本体は従来どおり各端末のlocalStorage)。
+仕組みは在庫管理アプリと同じで、`worker/index.js`が`/api/*`(ログイン・KV)を処理し、それ以外は`dist`の静的ファイルを返します(`wrangler.jsonc`)。
+
+- KVは在庫管理アプリと同じnamespaceを共有。このWorkerは`zk-quote:`で始まるキーしか読み書きできません。
+- Cloudflareダッシュボード(Workers → kitsutsuki-quote → 設定 → 変数とシークレット)に、**シークレット**として次の3つを登録:
+  - `GOOGLE_CLIENT_ID` … 在庫管理アプリと同じクライアントID
+  - `ALLOWED_EMAILS` … 許可するメール(カンマ区切り)。未設定だと誰もログインできません
+  - `SESSION_SIGNING_SECRET` … ランダムな長い文字列(32文字以上)
+- Google Cloud Console → 認証情報 → 該当のOAuthクライアント → 「承認済みのJavaScript生成元」に `https://kitsutsuki-quote.kitsutsukido.workers.dev` を追加。
+- ローカルで試すときは `.dev.vars`(gitignore済み)に上の3つを書いてからwranglerのdevを起動。

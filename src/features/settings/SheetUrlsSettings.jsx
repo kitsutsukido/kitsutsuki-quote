@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Download } from "lucide-react";
+import { SHEET_SETTINGS_KEY, getConfig, getMe, kvGet, kvPut, loadGsi, loginWithIdToken, logout } from "../../lib/remote.js";
 import { dataForGenre, pullFromSheet, pushToSheet } from "../../lib/sheetSync.js";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -9,6 +10,121 @@ import {
   loadSecretsByGenre,
   saveSecretsByGenre,
 } from "../../lib/storage.js";
+
+// ---------- ログイン(Google)とURL・合言葉の端末間共有 ----------
+// auth: "checking" | "local"(サーバー無し=この端末だけ) | "out"(未ログイン) | "in"
+function useSharedSheetSettings(urlsByGenre, secretsByGenre, setUrlsByGenre, setSecretsByGenre) {
+  const [auth, setAuth] = useState("checking");
+  const [clientId, setClientId] = useState("");
+  const [user, setUser] = useState(null);
+  const [note, setNote] = useState("");
+  const loaded = useRef(false); // KVから読み終わるまでは書き込まない(空で上書きしないため)
+
+  const loadFromKv = async (me) => {
+    try {
+      const remote = await kvGet(SHEET_SETTINGS_KEY);
+      if (remote) {
+        setUrlsByGenre(remote.urlsByGenre || {});
+        setSecretsByGenre(remote.secretsByGenre || {});
+        setNote("ログイン中: 設定を共有データから読み込みました。");
+      } else {
+        // 共有データがまだ無ければ、この端末の設定を最初の共有データにする
+        await kvPut(SHEET_SETTINGS_KEY, { urlsByGenre, secretsByGenre });
+        setNote("ログイン中: この端末の設定を共有データとして保存しました。");
+      }
+      loaded.current = true;
+      setUser(me);
+      setAuth("in");
+    } catch (e) {
+      if (e.message === "unauthorized") setAuth("out");
+      else {
+        setNote(`共有データを読み込めませんでした: ${e.message}`);
+        setAuth("local");
+      }
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const cfg = await getConfig();
+      if (cancelled) return;
+      if (!cfg || !cfg.googleClientId) return setAuth("local");
+      setClientId(cfg.googleClientId);
+      const me = await getMe();
+      if (cancelled) return;
+      if (me === undefined) return setAuth("local");
+      if (me === null) return setAuth("out");
+      await loadFromKv(me);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 変更したら少し待って共有データへ保存
+  useEffect(() => {
+    if (auth !== "in" || !loaded.current) return;
+    const t = setTimeout(() => {
+      kvPut(SHEET_SETTINGS_KEY, { urlsByGenre, secretsByGenre }).catch((e) => {
+        if (e.message === "unauthorized") setAuth("out");
+        else setNote(`共有データへの保存に失敗しました: ${e.message}`);
+      });
+    }, 600);
+    return () => clearTimeout(t);
+  }, [auth, urlsByGenre, secretsByGenre]);
+
+  const onCredential = async (idToken) => {
+    setNote("");
+    try {
+      const me = await loginWithIdToken(idToken);
+      await loadFromKv(me);
+    } catch (e) {
+      setNote(e.message);
+    }
+  };
+
+  const doLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      /* 失効に失敗してもCookieは期限で切れる */
+    }
+    loaded.current = false;
+    setUser(null);
+    setAuth("out");
+    setNote("");
+  };
+
+  return { auth, clientId, user, note, onCredential, doLogout };
+}
+
+function GoogleLoginButton({ clientId, onCredential }) {
+  const ref = useRef(null);
+  const [err, setErr] = useState("");
+  const cbRef = useRef(onCredential);
+  cbRef.current = onCredential; // 再描画のたびにボタンを作り直さないため
+  useEffect(() => {
+    let cancelled = false;
+    loadGsi()
+      .then(() => {
+        if (cancelled || !ref.current) return;
+        window.google.accounts.id.initialize({ client_id: clientId, callback: (r) => cbRef.current(r.credential) });
+        window.google.accounts.id.renderButton(ref.current, { theme: "outline", size: "large", width: 280, text: "signin_with" });
+      })
+      .catch((e) => setErr(e.message));
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+  return (
+    <div>
+      <div ref={ref} />
+      {err && <p className="text-xs text-red-600">{err}</p>}
+    </div>
+  );
+}
 
 // ---------- シリーズ(genre)ごとのApps Script Web アプリ URL ----------
 export function SheetUrlsSettings({ products, sync }) {
@@ -30,6 +146,8 @@ export function SheetUrlsSettings({ products, sync }) {
   useEffect(() => {
     saveSecretsByGenre(secretsByGenre);
   }, [secretsByGenre]);
+
+  const shared = useSharedSheetSettings(urlsByGenre, secretsByGenre, setUrlsByGenre, setSecretsByGenre);
 
   const setSecret = (genre, secret) => setSecretsByGenre((prev) => ({ ...prev, [genre]: secret }));
 
@@ -83,6 +201,20 @@ export function SheetUrlsSettings({ products, sync }) {
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
       <p className="text-sm font-medium text-[var(--ink)]">Apps Script Web アプリ URL(シリーズごと)</p>
+      {shared.auth === "out" && (
+        <div className="border border-[var(--border)] rounded-md p-3 space-y-2">
+          <p className="text-xs text-[var(--text)]">Googleでログインすると、URLと合言葉が全部の端末で共有されます(毎回入力する必要がなくなります)。</p>
+          <GoogleLoginButton clientId={shared.clientId} onCredential={shared.onCredential} />
+        </div>
+      )}
+      {shared.auth === "in" && (
+        <p className="text-xs text-[var(--text)]">
+          ログイン中: {shared.user?.email}(URLと合言葉は全部の端末で共有されます){" "}
+          <button className="underline" onClick={shared.doLogout}>ログアウト</button>
+        </p>
+      )}
+      {shared.auth === "local" && <p className="text-xs text-[var(--text-muted)]">この端末だけに保存されます(共有サーバーに接続できていません)。</p>}
+      {shared.note && <p className="text-xs text-[var(--text-muted)]">{shared.note}</p>}
       <p className="text-xs text-[var(--text-muted)]">
         シリーズ(ジャンル)ごとに別々のGoogleスプレッドシートで管理する運用のため、シリーズごとにApps
         ScriptのウェブアプリURLを登録してください。新しいシリーズの商品を登録すると、ここにも自動で欄が増えます。設定手順は下の「スプレッドシート側の設定手順とコードを見る」を参照
