@@ -9,7 +9,6 @@ export function SpecText({ item }) {
       {processes.map((p, i) => (
         <span key={i} className="block text-[var(--ink)] font-medium">・{p}</span>
       ))}
-      {!isMaterial(item) && item.foldedSize && <span className="block text-[var(--ink)] font-medium">・折り後サイズ: {item.foldedSize}</span>}
     </>
   );
 }
