@@ -28,6 +28,13 @@ export function LotHeader({ project, onSave }) {
         <button onClick={start} title="ロット名・部数を直す" className="p-1 hover:text-[var(--accent)]">
           <Pencil size={13} />
         </button>
+        <button
+          onClick={() => onSave({ status: project.status === "完了" ? "進行中" : "完了" })}
+          title={project.status === "完了" ? "押すと「進行中」に戻す(ダッシュボードにまた表示されます)" : "押すと「完了」にする(ダッシュボードから外れます)"}
+          className={`ml-1 text-xs px-2 py-0.5 rounded-md border ${project.status === "完了" ? "border-[var(--border)] text-[var(--text-muted)]" : "border-[var(--accent)] text-[var(--accent)]"}`}
+        >
+          {project.status}
+        </button>
       </p>
     );
   }
