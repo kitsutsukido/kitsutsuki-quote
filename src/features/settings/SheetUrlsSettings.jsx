@@ -92,9 +92,7 @@ function useSharedSheetSettings(urlsByGenre, secretsByGenre, setUrlsByGenre, set
       /* 失効に失敗してもCookieは期限で切れる */
     }
     loaded.current = false;
-    setUser(null);
-    setAuth("out");
-    setNote("");
+    window.location.reload(); // ログイン画面に戻る
   };
 
   return { auth, clientId, user, note, onCredential, doLogout };
