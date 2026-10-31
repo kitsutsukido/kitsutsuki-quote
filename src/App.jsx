@@ -125,7 +125,7 @@ export default function App() {
           />
         </div>
 
-        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-4xl">
+        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-6xl">
           {view === "dashboard" && (
             <Dashboard
               products={products}
