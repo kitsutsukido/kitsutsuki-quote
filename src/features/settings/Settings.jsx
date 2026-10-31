@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronRight, ChevronDown, Copy } from "lucide-react";
 import { RelatedAppsSettings } from "../relatedApps/RelatedAppsSettings.jsx";
 import { SheetUrlsSettings } from "./SheetUrlsSettings.jsx";
+import { VendorSettings } from "./VendorSettings.jsx";
 import { BackupSettings } from "./BackupSettings.jsx";
 import gasCode from "../../../gas/Code.gs?raw";
 
@@ -24,6 +25,8 @@ export function Settings({ products, sync }) {
   return (
     <div className="max-w-2xl space-y-4">
       <p className="text-lg font-medium text-[var(--ink)]">設定・連携</p>
+
+      <VendorSettings lineItems={sync.lineItems} />
 
       <BackupSettings />
 

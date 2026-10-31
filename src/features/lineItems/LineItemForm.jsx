@@ -4,6 +4,7 @@ import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { Chip } from "../../components/common/Chip.jsx";
 import { specString, isMaterial, KIND_PRINT, KIND_MATERIAL } from "../../lib/spec.js";
+import { useVendors } from "../../lib/vendors.jsx";
 import { createLineItem } from "../../data/seedData.js";
 import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
 
@@ -11,6 +12,7 @@ const groupFormDefaults = { name: "", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
 export function LineItemForm({ groups, productId, setGroups, lineItems, setLineItems, onCancel, onSave, onDelete, sessionId, initial }) {
+  const { vendors } = useVendors();
   const [form, setForm] = useState(initial ? { ...initial } : createLineItem({ sessionId, groupId: groups[0]?.id || null }));
   const [processInput, setProcessInput] = useState("");
   const [groupFormTarget, setGroupFormTarget] = useState(null); // null=非表示 / "new"=新規追加 / それ以外=編集中のグループid
@@ -253,7 +255,23 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       <div className="grid grid-cols-3 gap-3">
         <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
-        <Field label={material ? "購入場所" : "印刷場所"}><input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder={material ? "シモジマ" : "プリントパック"} /></Field>
+        <Field label={material ? "購入場所" : "印刷場所"}>
+          <input className={inputCls} value={form.submitTo} onChange={set("submitTo")} placeholder={material ? "シモジマ" : "プリントパック"} />
+          {vendors.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {vendors.map((v) => (
+                <button
+                  type="button"
+                  key={v}
+                  onClick={() => setForm((f) => ({ ...f, submitTo: v }))}
+                  className={`text-xs px-2 py-0.5 rounded-md border ${form.submitTo === v ? "border-[var(--accent)] text-[var(--accent)]" : "border-[var(--border)] text-[var(--text)]"}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          )}
+        </Field>
       </div>
 
       <div className="flex justify-between items-center pt-2">
