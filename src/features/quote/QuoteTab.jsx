@@ -300,7 +300,10 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
             )}
             <div className="flex justify-between items-center pt-3 mt-2 border-t border-[var(--border)]">
               <span className="text-sm font-medium">経費合計</span>
-              <span className="text-sm font-medium font-mono">{total.toLocaleString()}円</span>
+              <span className="text-sm font-medium font-mono">
+                {project.qty > 0 && <span className="text-[var(--text-muted)] font-normal mr-3">1部あたり {(total / project.qty).toFixed(1)}円</span>}
+                {total.toLocaleString()}円
+              </span>
             </div>
           </div>
 
