@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, ChevronRight, ChevronDown, Database } from "lucide-react";
 
-// ---------- サイドバー(ジャンル > 商品 > 案件の3階層、既存/新規タブ) ----------
+// ---------- サイドバー(ダッシュボード・マスタ、ジャンル > 商品 > 案件の3階層、新規商品の作成) ----------
 export function Sidebar({ products, projects, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onCreateNew }) {
-  const [sideTab, setSideTab] = useState("existing"); // existing | new
-
   const genres = [];
   for (const prod of products) {
     if (!genres.includes(prod.genre)) genres.push(prod.genre);
@@ -41,29 +39,22 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
     <aside className="w-64 min-h-full border-r border-[var(--border)] bg-[var(--card)] p-3">
       <button
         onClick={() => setView("dashboard")}
-        className={`w-full text-left text-sm px-2 py-2 rounded-md mb-2 ${
+        className={`w-full text-left text-sm px-2 py-2 rounded-md mb-1 ${
           view === "dashboard" ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium" : "text-[var(--text)] hover:bg-[var(--paper)]"
         }`}
       >
         ダッシュボード
       </button>
-      <div className="flex gap-1 mb-3 border border-[var(--border)] rounded-md p-0.5 bg-[var(--paper)]">
-        <button
-          onClick={() => setSideTab("existing")}
-          className={`flex-1 text-xs py-1.5 rounded ${sideTab === "existing" ? "bg-[var(--card)] shadow-sm text-[var(--ink)] font-medium" : "text-[var(--text-muted)]"}`}
-        >
-          既存の商品
-        </button>
-        <button
-          onClick={() => setSideTab("new")}
-          className={`flex-1 text-xs py-1.5 rounded ${sideTab === "new" ? "bg-[var(--card)] shadow-sm text-[var(--ink)] font-medium" : "text-[var(--text-muted)]"}`}
-        >
-          新規作成
-        </button>
-      </div>
+      <button
+        onClick={() => setView("masters")}
+        className={`w-full text-left text-sm px-2 py-2 rounded-md mb-3 flex items-center gap-1.5 ${
+          view === "masters" ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium" : "text-[var(--text)] hover:bg-[var(--paper)]"
+        }`}
+      >
+        <Database size={14} /> マスタ
+      </button>
 
-      {sideTab === "existing" ? (
-        <div>
+      <div>
           {genres.map((genre) => {
             const genreProducts = products.filter((prod) => prod.genre === genre);
             const isGenreOpen = openGenres.has(genre);
@@ -83,25 +74,25 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
                       const isProductOpen = openProducts.has(prod.id);
                       return (
                         <div key={prod.id} className="mb-1">
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => onOpenProduct(prod.id)}
-                              className={`flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md text-left ${
-                                view === "productOverview" && selectedProductId === prod.id
-                                  ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium"
-                                  : "text-[var(--text)] hover:bg-[var(--paper)]"
-                              }`}
-                            >
-                              <span className="truncate block">{prod.name}</span>
-                            </button>
-                            <button
-                              onClick={() => toggleProduct(prod.id)}
-                              title={isProductOpen ? "折りたたむ" : "展開する"}
-                              className="shrink-0 p-1 rounded-md text-[var(--text-muted)] hover:bg-[var(--paper)]"
-                            >
-                              {isProductOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => {
+                              const isCurrent = view === "productOverview" && selectedProductId === prod.id;
+                              // 開いていない→商品の画面を開いて、ロット一覧も開く。すでにその商品の画面→一覧を開閉
+                              if (isCurrent || (view === "project" && isProductOpen)) toggleProduct(prod.id);
+                              else {
+                                if (!isProductOpen) toggleProduct(prod.id);
+                              }
+                              if (!isCurrent) onOpenProduct(prod.id);
+                            }}
+                            className={`w-full flex items-center justify-between gap-1 px-2 py-1.5 text-sm rounded-md text-left ${
+                              view === "productOverview" && selectedProductId === prod.id
+                                ? "bg-[var(--accent-soft)] text-[var(--accent)] font-medium"
+                                : "text-[var(--text)] hover:bg-[var(--paper)]"
+                            }`}
+                          >
+                            <span className="truncate">{prod.name}</span>
+                            {isProductOpen ? <ChevronDown size={14} className="shrink-0 text-[var(--text-muted)]" /> : <ChevronRight size={14} className="shrink-0 text-[var(--text-muted)]" />}
+                          </button>
                           {isProductOpen && (
                             <div className="ml-2 border-l border-[var(--border)] pl-2">
                               {productProjects.map((p) => (
@@ -127,14 +118,10 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
             );
           })}
         </div>
-      ) : (
-        <div className="px-1 space-y-2">
-          <p className="text-xs text-[var(--text-muted)]">まったく新しい商品を作成します。増刷(新しいロット)は、既存の商品を開いて「増刷を登録」から追加してください。</p>
-          <button onClick={onCreateNew} className="w-full text-sm px-3 py-2 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center justify-center gap-1">
-            <Plus size={14} /> 新規商品を作成
-          </button>
-        </div>
-      )}
+
+      <button onClick={onCreateNew} className="mt-3 w-full text-sm px-3 py-2 border border-dashed border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)] rounded-md flex items-center justify-center gap-1">
+        <Plus size={14} /> 新規商品を作成
+      </button>
     </aside>
   );
 }
