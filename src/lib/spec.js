@@ -13,13 +13,13 @@ export function specString(item, { withProcesses = true } = {}) {
   const front = item.colorFront || "";
   const colors = front.endsWith("*") ? `${front.slice(0, -1)}(面指定なし)` : [front, item.colorBack].filter(Boolean).join("/");
   const parts = [
-    item.size,
+    // 折り後のサイズは、加工ではなく大きさの情報なのでサイズの横に出す(例: A4(折り後A6))
+    item.foldedSize ? `${item.size || ""}(折り後${item.foldedSize})` : item.size,
     colors,
     item.paper ? `${item.paper}${item.weight || ""}` : item.weight,
     item.paperColor ? `紙色:${item.paperColor}` : "",
     item.inkColor ? `インク:${item.inkColor}` : "",
     ...(withProcesses ? item.processes || [] : []),
-    withProcesses && item.foldedSize ? `折り後:${item.foldedSize}` : "",
   ].filter(Boolean);
   return parts.join(" ");
 }
