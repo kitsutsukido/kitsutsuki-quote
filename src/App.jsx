@@ -22,6 +22,7 @@ import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { ProductOverview } from "./features/product/ProductOverview.jsx";
 import { Settings } from "./features/settings/Settings.jsx";
+import { LotHeader } from "./features/project/LotHeader.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
 import { SubmissionTab } from "./features/submission/SubmissionTab.jsx";
 import { ProfitTab } from "./features/profit/ProfitTab.jsx";
@@ -163,7 +164,7 @@ export default function App() {
               >
                 {product.name}
               </button>
-              <p className="text-sm text-[var(--text-muted)] mb-4">{project.round}・印刷部数 {project.qty}部</p>
+              <LotHeader key={project.id} project={project} onSave={(patch) => setProjects((ps) => ps.map((x) => (x.id === project.id ? { ...x, ...patch } : x)))} />
 
               <div className="flex gap-1 border-b border-[var(--border)] mb-4">
                 {tabs.map((t) => (
