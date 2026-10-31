@@ -7,6 +7,8 @@ import { useVendors } from "../../lib/vendors.jsx";
 export function VendorSettings({ lineItems }) {
   const { vendors, setVendors } = useVendors();
   const [input, setInput] = useState("");
+  const [filter, setFilter] = useState("");
+  const shown = vendors.filter((v) => v.toLowerCase().includes(filter.trim().toLowerCase()));
 
   const add = () => {
     const name = input.trim();
@@ -23,11 +25,14 @@ export function VendorSettings({ lineItems }) {
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
       <p className="text-sm font-medium text-[var(--ink)]">印刷会社・購入先</p>
       <p className="text-xs text-[var(--text-muted)]">
-        ここに登録した会社は、明細の「印刷場所/購入場所」をボタンで選べます(登録にない会社も、これまでどおり入力できます)。ログイン中は全部の端末で共有されます。
+        ここに登録した会社は、明細の「印刷場所/購入場所」で、文字を入れると候補が絞り込まれます。よく使う5社はボタンでも選べます(登録にない会社も、これまでどおり入力できます)。ログイン中は全部の端末で共有されます。
       </p>
+      {vendors.length > 8 && (
+        <input className={inputCls} placeholder={`登録済み${vendors.length}社から検索`} value={filter} onChange={(e) => setFilter(e.target.value)} />
+      )}
       <div className="flex flex-wrap gap-2">
         {vendors.length === 0 && <span className="text-xs text-[var(--text-muted)]">まだ登録がありません。</span>}
-        {vendors.map((name) => (
+        {shown.map((name) => (
           <span key={name} className="bg-[var(--paper)] rounded-md px-2 py-1 text-sm flex items-center gap-1">
             {name}
             <X size={13} className="cursor-pointer" onClick={() => remove(name)} />
