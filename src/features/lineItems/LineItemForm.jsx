@@ -244,6 +244,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
             <button onClick={addProcess} className="text-sm px-3 shrink-0 whitespace-nowrap border border-[var(--border)] rounded-md">追加</button>
           </div>
         </div>
+        <Field label="折り後のサイズ(折りがあるとき)"><input className={inputCls} value={form.foldedSize || ""} onChange={set("foldedSize")} placeholder="例：A6、90×55mm" /></Field>
         </>
         )}
         <div className="bg-[var(--paper)] rounded-md px-3 py-2 text-sm">

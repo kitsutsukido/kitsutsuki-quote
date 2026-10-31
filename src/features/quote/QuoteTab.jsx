@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Plus, X, Pencil, ChevronUp, ChevronDown } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
-import { specString } from "../../lib/spec.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
+import { SpecText } from "../../components/common/SpecText.jsx";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
@@ -139,7 +139,7 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
     >
       <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">{it.name}</span>
       <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
-        {specString(it)}
+        <SpecText item={it} />
         {it.submitTo && <span className="md:hidden"> ・{it.submitTo}</span>}
         <span className="md:hidden font-mono"> ・{it.qty}部 × {(it.amount / it.qty).toFixed(1)}円</span>
       </span>

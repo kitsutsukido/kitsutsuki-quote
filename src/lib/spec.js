@@ -4,7 +4,8 @@ export const KIND_MATERIAL = "material";
 
 export const isMaterial = (item) => item.kind === KIND_MATERIAL;
 
-export function specString(item) {
+// withProcesses=false: 加工を除いた仕様(加工は別行の箇条書きで出すとき用)
+export function specString(item, { withProcesses = true } = {}) {
   if (isMaterial(item)) {
     return [item.size, item.note].filter(Boolean).join("・");
   }
@@ -17,7 +18,8 @@ export function specString(item) {
     item.paper ? `${item.paper}${item.weight || ""}` : item.weight,
     item.paperColor ? `紙色:${item.paperColor}` : "",
     item.inkColor ? `インク:${item.inkColor}` : "",
-    ...(item.processes || []),
+    ...(withProcesses ? item.processes || [] : []),
+    withProcesses && item.foldedSize ? `折り後:${item.foldedSize}` : "",
   ].filter(Boolean);
   return parts.join(" ");
 }
