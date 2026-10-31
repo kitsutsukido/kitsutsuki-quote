@@ -9,9 +9,7 @@ export function Header({ view, setView, onToggleMenu }) {
       <button onClick={onToggleMenu} aria-label="メニュー" className="md:pointer-events-none -m-1 p-1 shrink-0">
         <Menu size={20} />
       </button>
-      <button onClick={() => setView("dashboard")} className="font-display text-base font-semibold hover:text-[var(--accent)]">
-        {APP_NAME}
-      </button>
+      <span className="font-display text-base font-semibold">{APP_NAME}</span>
       <button
         onClick={() => setView("settings")}
         title="設定・連携"

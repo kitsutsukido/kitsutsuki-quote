@@ -21,6 +21,7 @@ import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
 import { ProductOverview } from "./features/product/ProductOverview.jsx";
+import { Masters } from "./features/masters/Masters.jsx";
 import { Settings } from "./features/settings/Settings.jsx";
 import { LotHeader } from "./features/project/LotHeader.jsx";
 import { QuoteTab } from "./features/quote/QuoteTab.jsx";
@@ -153,6 +154,7 @@ export default function App() {
             />
           )}
 
+          {view === "masters" && <Masters lineItems={lineItems} />}
           {view === "settings" && <Settings products={products} sync={{ projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (
