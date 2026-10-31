@@ -1,5 +1,6 @@
+import { SpecText } from "../../components/common/SpecText.jsx";
 import { Upload, Undo2 } from "lucide-react";
-import { specString, isMaterial } from "../../lib/spec.js";
+import { isMaterial } from "../../lib/spec.js";
 
 // ---------- 入稿管理タブ ----------
 export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
@@ -73,7 +74,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
               <span className="text-sm font-medium text-[var(--ink)]">{it.name}</span>
               <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{it.qty}部</span>
             </div>
-            <p className="text-xs text-[var(--text-muted)]">{specString(it)}</p>
+            <p className="text-xs text-[var(--text-muted)]"><SpecText item={it} /></p>
             <div className="flex items-center justify-between gap-2 text-sm">
               <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span></span>
               <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
@@ -101,7 +102,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
               <tr key={it.id} className="border-b border-[var(--border)] last:border-0">
                 <td className="py-2 px-3">{it.submitTo || "―"}</td>
                 <td className="py-2 px-3">{it.name}</td>
-                <td className="py-2 px-3 text-[var(--text-muted)]">{specString(it)}</td>
+                <td className="py-2 px-3 text-[var(--text-muted)]"><SpecText item={it} /></td>
                 <td className="py-2 px-3 text-right font-mono">{it.qty}</td>
                 <td className="py-2 px-3">{purchaseSelect(it)}</td>
                 <td className="py-2 px-3">{submitControl(it)}</td>

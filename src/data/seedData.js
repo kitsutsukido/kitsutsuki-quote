@@ -49,6 +49,7 @@ export const createLineItem = (fields) => ({
   size: "",
   paper: "",
   weight: "",
+  foldedSize: "", // 折り後のサイズ(折り加工があるとき)
   inkColor: "", // インクの色(ハグルマなど、色を選んで刷るもの)。複数ならまとめて記入
   paperColor: "", // 紙(封筒など)の色。複数ならまとめて記入
   colorFront: "4c",
