@@ -205,10 +205,6 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
           <Field label="斤量"><input className={inputCls} value={form.weight} onChange={set("weight")} placeholder="90kg" /></Field>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="紙の色(複数ならまとめて記入)"><input className={inputCls} value={form.paperColor || ""} onChange={set("paperColor")} placeholder="例：ホワイト、ピンク" /></Field>
-          <Field label="インクの色(複数ならまとめて記入)"><input className={inputCls} value={form.inkColor || ""} onChange={set("inkColor")} placeholder="例：黒、赤" /></Field>
-        </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label={anySide ? "印刷の色数" : "表面の色数"}>
             <select className={inputCls} value={form.colorFront} onChange={setFront}>
@@ -223,6 +219,10 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
               <option value="0c">印刷なし(0c)＝片面</option><option value="1c">1色(1c)</option><option value="2c">2色(2c)</option><option value="4c">4色(4c)＝両面</option>
             </select>
           </Field>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="紙の色(複数ならまとめて記入)"><input className={inputCls} value={form.paperColor || ""} onChange={set("paperColor")} placeholder="例：ホワイト、ピンク" /></Field>
+          <Field label="インクの色(複数ならまとめて記入)"><input className={inputCls} value={form.inkColor || ""} onChange={set("inkColor")} placeholder="例：黒、赤" /></Field>
         </div>
         <div>
           <label className="text-xs text-[var(--text-muted)] block mb-1">加工(複数可)</label>
