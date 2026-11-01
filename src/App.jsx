@@ -17,6 +17,8 @@ import {
   loadProfitSettings, saveProfitSettings,
   loadProfitPatterns, saveProfitPatterns,
 } from "./lib/storage.js";
+import { useDataSync } from "./lib/dataSync.js";
+import { SyncConflictModal } from "./components/SyncConflictModal.jsx";
 import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
@@ -56,7 +58,21 @@ export default function App() {
   useEffect(() => saveProfitSettings(settings), [settings]);
   useEffect(() => saveProfitPatterns(patterns), [patterns]);
 
-  const project = projects.find((p) => p.id === selectedId);
+  // 共有データとの自動同期(パソコン・スマホで同じ内容にする)
+  const sync = useDataSync({
+    data: { projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
+    seed: { projects: initialProjects, sessions: initialSessions, lineItems: initialLineItems, groups: initialGroups, profitSettings: initialProfitSettings, profitPatterns: initialPatterns },
+    apply: (d) => {
+      if (d.projects) setProjects(d.projects);
+      if (d.sessions) setSessions(d.sessions);
+      if (d.lineItems) setLineItems(d.lineItems);
+      if (d.groups) setGroups(d.groups);
+      if (d.profitSettings) setSettings(d.profitSettings);
+      if (d.profitPatterns) setPatterns(d.profitPatterns);
+    },
+  });
+
+  const project = projects.find((p) => p.id === selectedId) || projects[0];
   const product = products.find((p) => p.id === project.productId);
   const selectedProduct = products.find((p) => p.id === selectedProductId);
   const tabs = [
@@ -109,7 +125,16 @@ export default function App() {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
+      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
+
+      {sync.conflict && (
+        <SyncConflictModal
+          local={{ projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns }}
+          remote={sync.conflict.remote}
+          onUseLocal={sync.useLocal}
+          onUseRemote={sync.useRemote}
+        />
+      )}
 
       <div className="flex flex-1">
         {menuOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setMenuOpen(false)} />}
