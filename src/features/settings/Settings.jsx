@@ -25,7 +25,17 @@ export function Settings({ products, sync }) {
     <div className="max-w-2xl space-y-4">
       <p className="text-lg font-medium text-[var(--ink)]">設定・連携</p>
 
-      <BackupSettings />
+      <BackupSettings
+        data={{ projects: sync.projects, sessions: sync.sessions, lineItems: sync.lineItems, groups: sync.groups, profitSettings: sync.settings, profitPatterns: sync.patterns }}
+        applyData={(d) => {
+          if (d.projects) sync.setProjects(d.projects);
+          if (d.sessions) sync.setSessions(d.sessions);
+          if (d.lineItems) sync.setLineItems(d.lineItems);
+          if (d.groups) sync.setGroups(d.groups);
+          if (d.profitSettings) sync.setSettings(d.profitSettings);
+          if (d.profitPatterns) sync.setPatterns(d.profitPatterns);
+        }}
+      />
 
       <p className="text-sm font-medium text-[var(--ink)] pt-2">Google スプレッドシート連携</p>
 

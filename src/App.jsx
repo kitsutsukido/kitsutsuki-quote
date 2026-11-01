@@ -17,8 +17,7 @@ import {
   loadProfitSettings, saveProfitSettings,
   loadProfitPatterns, saveProfitPatterns,
 } from "./lib/storage.js";
-import { useDataSync } from "./lib/dataSync.js";
-import { SyncConflictModal } from "./components/SyncConflictModal.jsx";
+import { useSharedData } from "./lib/dataSync.js";
 import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
@@ -37,31 +36,35 @@ const deepLink = resolveProductDeepLink(
 );
 
 // ---------- ルートアプリ ----------
-export default function App() {
+export default function App({ boot }) {
+  const serverMode = boot.mode === "server";
+  // 共有データがあるときは共有データから、無いとき(開発中)はこの端末のlocalStorageから
+  const init = (key, loader, seed) => (serverMode ? boot.data[key] ?? seed : loader(seed));
   const [products] = useState(initialProducts);
-  const [projects, setProjects] = useState(() => loadProjects(initialProjects));
+  const [projects, setProjects] = useState(() => init("projects", loadProjects, initialProjects));
   const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [view, setView] = useState(deepLink?.view ?? "dashboard");
-  const [sessions, setSessions] = useState(() => loadSessions(initialSessions));
-  const [groups, setGroups] = useState(() => loadGroups(initialGroups));
-  const [lineItems, setLineItems] = useState(() => loadLineItems(initialLineItems));
-  const [settings, setSettings] = useState(() => loadProfitSettings(initialProfitSettings));
-  const [patterns, setPatterns] = useState(() => loadProfitPatterns(initialPatterns));
+  const [sessions, setSessions] = useState(() => init("sessions", loadSessions, initialSessions));
+  const [groups, setGroups] = useState(() => init("groups", loadGroups, initialGroups));
+  const [lineItems, setLineItems] = useState(() => init("lineItems", loadLineItems, initialLineItems));
+  const [settings, setSettings] = useState(() => init("profitSettings", loadProfitSettings, initialProfitSettings));
+  const [patterns, setPatterns] = useState(() => init("profitPatterns", loadProfitPatterns, initialPatterns));
   const [tab, setTab] = useState("quote");
   const [menuOpen, setMenuOpen] = useState(false); // スマホ幅でのサイドバー開閉
 
-  useEffect(() => saveProjects(projects), [projects]);
-  useEffect(() => saveSessions(sessions), [sessions]);
-  useEffect(() => saveGroups(groups), [groups]);
-  useEffect(() => saveLineItems(lineItems), [lineItems]);
-  useEffect(() => saveProfitSettings(settings), [settings]);
-  useEffect(() => saveProfitPatterns(patterns), [patterns]);
+  useEffect(() => { if (!serverMode) saveProjects(projects); }, [projects, serverMode]);
+  useEffect(() => { if (!serverMode) saveSessions(sessions); }, [sessions, serverMode]);
+  useEffect(() => { if (!serverMode) saveGroups(groups); }, [groups, serverMode]);
+  useEffect(() => { if (!serverMode) saveLineItems(lineItems); }, [lineItems, serverMode]);
+  useEffect(() => { if (!serverMode) saveProfitSettings(settings); }, [settings, serverMode]);
+  useEffect(() => { if (!serverMode) saveProfitPatterns(patterns); }, [patterns, serverMode]);
 
-  // 共有データとの自動同期(パソコン・スマホで同じ内容にする)
-  const sync = useDataSync({
+  // 共有データへの自動保存・最新の取り込み
+  const sync = useSharedData({
+    mode: boot.mode,
+    initialUpdatedAt: boot.updatedAt,
     data: { projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
-    seed: { projects: initialProjects, sessions: initialSessions, lineItems: initialLineItems, groups: initialGroups, profitSettings: initialProfitSettings, profitPatterns: initialPatterns },
     apply: (d) => {
       if (d.projects) setProjects(d.projects);
       if (d.sessions) setSessions(d.sessions);
@@ -126,15 +129,6 @@ export default function App() {
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
       <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
-
-      {sync.conflict && (
-        <SyncConflictModal
-          local={{ projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns }}
-          remote={sync.conflict.remote}
-          onUseLocal={sync.useLocal}
-          onUseRemote={sync.useRemote}
-        />
-      )}
 
       <div className="flex flex-1">
         {menuOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setMenuOpen(false)} />}

@@ -1,30 +1,19 @@
 import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
 
-// 見積もりのデータ(このブラウザの中にだけある)を、ファイルに書き出す・読み込む。
-// パソコンとスマホの間でデータを移すための暫定機能(スプレッドシート同期ができるまで)。
-// 合言葉・スプレッドシートURLは端末ごとの設定なので含めない。
+// 見積もりのデータを、ファイルに書き出す(控え)・読み込む(控えから戻す)。
+// 合言葉・スプレッドシートURLは含めない。
 const APP_ID = "kitsutsuki-quote-backup";
 const DATA_KEYS = ["projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
 
-export function BackupSettings() {
+// data: 今のデータ({projects, ...})、applyData(d): データを置き換える
+export function BackupSettings({ data: current, applyData }) {
   const fileRef = useRef(null);
   const [message, setMessage] = useState("");
 
   const exportData = () => {
     const data = {};
-    for (const k of DATA_KEYS) {
-      try {
-        const raw = window.localStorage.getItem(`zk-quote:${k}`);
-        if (raw) data[k] = JSON.parse(raw);
-      } catch (e) {
-        // 読めないキーは飛ばす
-      }
-    }
-    if (Object.keys(data).length === 0) {
-      setMessage("書き出せるデータがまだありません(まだ何も編集していない状態です)。");
-      return;
-    }
+    for (const k of DATA_KEYS) if (current?.[k] !== undefined) data[k] = current[k];
     const payload = { app: APP_ID, version: 1, exportedAt: new Date().toISOString(), data };
     const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -54,18 +43,11 @@ export function BackupSettings() {
         return;
       }
       const when = payload.exportedAt ? payload.exportedAt.slice(0, 16).replace("T", " ") : "不明";
-      if (!window.confirm(`バックアップ(書き出し日時: ${when} UTC)を読み込みます。\nこの端末の今のデータは上書きされ、元に戻せません。よろしいですか？`)) return;
-      for (const k of keys) {
-        window.localStorage.setItem(`zk-quote:${k}`, JSON.stringify(payload.data[k]));
-      }
-      // 読み込んだデータは共有データにも反映させる(次の同期で送る印)
-      try {
-        const meta = JSON.parse(window.localStorage.getItem("zk-quote:syncMeta") || "{}");
-        window.localStorage.setItem("zk-quote:syncMeta", JSON.stringify({ ...meta, dirty: true }));
-      } catch (e2) {
-        /* 印を付けられなくても読み込みは続ける */
-      }
-      window.location.reload();
+      if (!window.confirm(`バックアップ(書き出し日時: ${when} UTC)を読み込みます。\n今のデータは上書きされます(共有データも同じ内容になります)。よろしいですか？`)) return;
+      const next = {};
+      for (const k of keys) next[k] = payload.data[k];
+      applyData(next);
+      setMessage("読み込みました。共有データにも保存されます。");
     } catch (err) {
       setMessage("ファイルを読み込めませんでした。");
     }
@@ -73,10 +55,10 @@ export function BackupSettings() {
 
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
-      <p className="text-sm font-medium text-[var(--ink)]">データのバックアップ・端末間の移行</p>
+      <p className="text-sm font-medium text-[var(--ink)]">データの控え(書き出し・読み込み)</p>
       <p className="text-xs text-[var(--text-muted)]">
-        見積もりのデータは、いまこのブラウザの中にだけ保存されています。パソコンとスマホでは別のデータです。
-        書き出したファイルを別の端末で読み込むと、そのデータに置き換わります(合言葉・スプレッドシートURLは含みません)。
+        見積もりのデータは共有データに保存され、パソコンでもスマホでも同じ内容です。ここでは、控えとしてファイルに書き出したり、
+        書き出したファイルから戻したりできます(読み込むと、今のデータが置き換わります。合言葉・スプレッドシートURLは含みません)。
       </p>
       <div className="flex flex-wrap gap-2">
         <button onClick={exportData} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
