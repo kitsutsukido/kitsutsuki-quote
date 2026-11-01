@@ -15,6 +15,21 @@ export function subtractDays(dateStr, n, mode) {
   return d.toISOString().slice(0, 10);
 }
 
+// 日付(YYYY-MM-DD)に n 日足す。business なら土日を数えない。
+export function addDays(dateStr, n, mode) {
+  if (!dateStr) return "";
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  let left = Math.max(0, Math.floor(Number(n) || 0));
+  while (left > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const w = d.getUTCDay();
+    if (mode === "business" && (w === 0 || w === 6)) continue;
+    left -= 1;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
 // 明細の印刷場所・購入場所に対応するマスタの会社(種別の違うものは見ない)
 export function findVendor(vendors, item) {
   const name = (item.submitTo || "").trim();
@@ -36,4 +51,14 @@ export function submitDeadline(item, project, vendors) {
   const base = assembly ? project?.productDue : project?.materialDue || project?.productDue;
   if (!base) return { date: manual, calc: false };
   return { date: subtractDays(base, days, vendor?.days === "business" ? "business" : "calendar"), calc: true, base, assembly };
+}
+
+// 実際の納品日。手で入れた日(deliveryDate)があればそれ、無ければ入稿した日+日数で自動。
+// 入稿していない・日数が無いときは空。
+export function deliveryDateOf(item, vendors) {
+  if (item.deliveryDate) return { date: item.deliveryDate, manual: true };
+  const days = Number(item.printDays);
+  if (!item.actualDate || !item.printDays || !Number.isFinite(days) || days <= 0) return { date: "", manual: false };
+  const vendor = findVendor(vendors, item);
+  return { date: addDays(item.actualDate, days, vendor?.days === "business" ? "business" : "calendar"), manual: false };
 }

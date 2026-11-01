@@ -2,7 +2,7 @@ import { SpecText } from "../../components/common/SpecText.jsx";
 import { Upload, Undo2 } from "lucide-react";
 import { isMaterial } from "../../lib/spec.js";
 import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
-import { submitDeadline, findVendor } from "../../lib/deadlines.js";
+import { submitDeadline, findVendor, deliveryDateOf } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
 
 // ---------- 入稿管理タブ ----------
@@ -67,6 +67,27 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
     );
   };
 
+  // 納品日: 入稿した日+日数で自動。指定がある場合は手で書き換えられる
+  const deliveryControl = (it) => {
+    const dv = deliveryDateOf(it, vendors);
+    return (
+      <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] whitespace-nowrap">
+        納品{dv.manual ? "(指定)" : dv.date ? "(予定)" : ""}
+        <input
+          type="date"
+          className="border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text)]"
+          value={dv.date}
+          onChange={(e) => update(it.id, { deliveryDate: e.target.value })}
+        />
+        {dv.manual && (
+          <button onClick={() => update(it.id, { deliveryDate: "" })} className="underline" title="手で入れた日をやめて、入稿日+日数の自動に戻す">
+            自動に戻す
+          </button>
+        )}
+      </span>
+    );
+  };
+
   const submitControl = (it) => {
     const dl = deadlineOf(it).date;
     const isOverdue = dl && !it.actualDate && dl < today;
@@ -77,10 +98,11 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
         </span>
         <input type="date" className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
           value={it.actualDate} onChange={(e) => update(it.id, { actualDate: e.target.value })} />
-        <button onClick={() => update(it.id, { actualDate: "" })}
+        <button onClick={() => update(it.id, { actualDate: "", deliveryDate: "" })}
           className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
           <Undo2 size={12} /> 取り消す
         </button>
+        {deliveryControl(it)}
       </div>
     ) : (
       <div className="flex flex-wrap items-center gap-2">
