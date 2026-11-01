@@ -125,7 +125,7 @@ export default function App() {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
+      <Header syncStatus={sync.status} syncedAt={sync.syncedAt} onRetrySync={sync.retry} view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
 
       {sync.conflict && (
         <SyncConflictModal

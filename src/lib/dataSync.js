@@ -173,5 +173,7 @@ export function useDataSync({ data, apply, seed }) {
   };
   const useRemote = () => conflict?.remote && adopt(conflict.remote);
 
-  return { status, conflict, useLocal, useRemote, retry: check };
+  // 共有データに最後に保存された時刻(表示用)。保存済みのときだけ使う
+  const syncedAt = status === "synced" ? readMeta().lastSyncedAt || "" : "";
+  return { status, syncedAt, conflict, useLocal, useRemote, retry: check };
 }
