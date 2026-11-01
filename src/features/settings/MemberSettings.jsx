@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useRef } from "react";
-import { Upload } from "lucide-react";
+import { Upload, RefreshCw } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
+import { getInventoryMembers } from "../../lib/remote.js";
+import { mergeImportedMembers, importReasonText } from "../../lib/members.js";
 
 // ---------- メンバーマスタ(入稿・購入の担当者とSlackリマインダーの宛先) ----------
 // 在庫管理アプリのCSVからメンバー(名前・SlackユーザーIDだけ)を取り込む。住所・電話などは読まない。
@@ -34,27 +36,25 @@ export function MemberSettings({ members, setMembers }) {
         setMessage("取り込めるメンバー(種別「社員」)がありませんでした。");
         return;
       }
-      let added = 0;
-      let updated = 0;
-      setMembers((prev) => {
-        const next = [...prev];
-        added = 0;
-        updated = 0;
-        for (const s of src) {
-          const i = next.findIndex((m) => m.name === s.name);
-          if (i < 0) {
-            next.push({ id: `mem-${Date.now()}-${next.length}`, name: s.name, slackUserId: s.slackUserId });
-            added += 1;
-          } else if (s.slackUserId && next[i].slackUserId !== s.slackUserId) {
-            next[i] = { ...next[i], slackUserId: s.slackUserId };
-            updated += 1;
-          }
-        }
-        return next;
-      });
+      setMembers((prev) => mergeImportedMembers(prev, src));
       setMessage(`取り込みました(メンバー${src.length}人。すでにいる人はSlackユーザーIDだけ更新します)。`);
     } catch (err) {
       setMessage("ファイルを読み込めませんでした。");
+    }
+  };
+  // 在庫管理アプリと同期(アプリを開いたときにも自動で行われる)
+  const sync = async () => {
+    setMessage("");
+    try {
+      const r = await getInventoryMembers();
+      if (!r.found) {
+        setMessage(`${importReasonText(r.reason)} うまくいかないときは、下のCSVから取り込めます。`);
+        return;
+      }
+      setMembers((prev) => mergeImportedMembers(prev, r.members));
+      setMessage(`在庫管理アプリと同期しました(メンバー${r.members.length}人)。`);
+    } catch (e) {
+      setMessage(e.message === "unauthorized" ? "ログインの有効期限が切れました。再読み込みしてください。" : e.message);
     }
   };
   const patch = (id, fields) => setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...fields } : m)));
@@ -68,11 +68,16 @@ export function MemberSettings({ members, setMembers }) {
       <p className="text-xs text-[var(--text-muted)]">
         入稿・購入の担当者として選べます。SlackユーザーID(例: U0123ABCD)を入れておくと、入稿期限の当日にSlackでその人にメンションが飛びます。
       </p>
-      <button onClick={() => fileRef.current?.click()} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
-        <Upload size={14} /> 在庫管理アプリのCSVから取り込む
+      <div className="flex flex-wrap gap-2">
+      <button onClick={sync} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
+        <RefreshCw size={14} /> 在庫管理アプリと同期
       </button>
+      <button onClick={() => fileRef.current?.click()} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1">
+        <Upload size={14} /> CSVから取り込む
+      </button>
+      </div>
       <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={importCsv} />
-      <p className="text-xs text-[var(--text-muted)]">在庫管理アプリの「マスタ管理 → メンバー・外注先マスタ」の「CSV出力」で出したファイルを選びます。</p>
+      <p className="text-xs text-[var(--text-muted)]">アプリを開いたときに、在庫管理アプリのメンバーが自動で同期されます(人が増えたら自動で追加)。同期できないときだけ、在庫管理アプリの「メンバー・外注先マスタ」の「CSV出力」のファイルを選んで取り込めます。</p>
       {message && <p className="text-xs text-[var(--text)]">{message}</p>}
       {members.length === 0 ? (
         <span className="text-xs text-[var(--text-muted)]">まだ登録がありません。</span>
