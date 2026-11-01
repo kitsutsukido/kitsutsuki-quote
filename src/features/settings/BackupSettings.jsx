@@ -4,7 +4,7 @@ import { Download, Upload } from "lucide-react";
 // 見積もりのデータを、ファイルに書き出す(控え)・読み込む(控えから戻す)。
 // 合言葉・スプレッドシートURLは含めない。
 const APP_ID = "kitsutsuki-quote-backup";
-const DATA_KEYS = ["projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
+const DATA_KEYS = ["products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
 
 // data: 今のデータ({projects, ...})、applyData(d): データを置き換える
 export function BackupSettings({ data: current, applyData }) {

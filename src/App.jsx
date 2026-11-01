@@ -18,6 +18,7 @@ import {
   loadProfitPatterns, saveProfitPatterns,
 } from "./lib/storage.js";
 import { useSharedData } from "./lib/dataSync.js";
+import { NewProductModal } from "./components/NewProductModal.jsx";
 import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
@@ -40,7 +41,8 @@ export default function App({ boot }) {
   const serverMode = boot.mode === "server";
   // 共有データがあるときは共有データから、無いとき(開発中)はこの端末のlocalStorageから
   const init = (key, loader, seed) => (serverMode ? boot.data[key] ?? seed : loader(seed));
-  const [products] = useState(initialProducts);
+  const [products, setProducts] = useState(() => (serverMode ? boot.data.products ?? initialProducts : initialProducts));
+  const [newProductOpen, setNewProductOpen] = useState(false);
   const [projects, setProjects] = useState(() => init("projects", loadProjects, initialProjects));
   const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -64,8 +66,9 @@ export default function App({ boot }) {
   const sync = useSharedData({
     mode: boot.mode,
     initialUpdatedAt: boot.updatedAt,
-    data: { projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
+    data: { products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
     apply: (d) => {
+      if (d.products) setProducts(d.products);
       if (d.projects) setProjects(d.projects);
       if (d.sessions) setSessions(d.sessions);
       if (d.lineItems) setLineItems(d.lineItems);
@@ -142,7 +145,7 @@ export default function App({ boot }) {
             setView={(v) => { setView(v); setMenuOpen(false); }}
             setSelectedId={(id) => { setSelectedId(id); setMenuOpen(false); }}
             onOpenProduct={(id) => { openProductOverview(id); setMenuOpen(false); }}
-            onCreateNew={() => {}}
+            onCreateNew={() => { setNewProductOpen(true); setMenuOpen(false); }}
           />
         </div>
 
@@ -174,7 +177,7 @@ export default function App({ boot }) {
           )}
 
           {view === "masters" && <Masters lineItems={lineItems} />}
-          {view === "settings" && <Settings products={products} sync={{ projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
+          {view === "settings" && <Settings products={products} sync={{ products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (
             <>
@@ -222,6 +225,18 @@ export default function App({ boot }) {
           )}
         </main>
       </div>
+      {newProductOpen && (
+        <NewProductModal
+          genres={[...new Set(products.map((p) => p.genre))]}
+          onClose={() => setNewProductOpen(false)}
+          onCreate={({ name, genre }) => {
+            const id = `P-${Date.now()}`;
+            setProducts((prev) => [...prev, { id, name, genre }]);
+            setNewProductOpen(false);
+            openProductOverview(id); // 続けてロットを登録できるよう、商品の画面を開く
+          }}
+        />
+      )}
     </div>
   );
 }

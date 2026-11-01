@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getConfig, kvGet, kvPut } from "./remote.js";
 import { mergeData } from "./mergeLib.js";
 import {
+  initialProducts,
   initialProjects,
   initialSessions,
   initialGroups,
@@ -30,11 +31,12 @@ import {
 export const DATA_KEY = "zk-quote:data";
 const MIGRATED_KEY = "zk-quote:migratedToShared";
 const BEFORE_KEY = "zk-quote:backup-before-sync";
-export const DATA_KEYS = ["projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
+export const DATA_KEYS = ["products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
 const SAVE_DELAY_MS = 1200;
 const POLL_MS = 30000;
 
 const SEED = {
+  products: initialProducts,
   projects: initialProjects,
   sessions: initialSessions,
   lineItems: initialLineItems,
@@ -51,6 +53,7 @@ export const summarize = (d) => ({
 
 // この端末のlocalStorageに残っている(これまでの)データ
 const readLocal = () => ({
+  products: SEED.products, // 商品は共有データだけで持つ(昔の端末のデータには無い)
   projects: loadProjects(SEED.projects),
   sessions: loadSessions(SEED.sessions),
   groups: loadGroups(SEED.groups),
