@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { useVendors, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY, VENDOR_KIND_LABEL, DAYS_LABEL } from "../../lib/vendors.jsx";
+import { useVendors, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY, KIND_IGNORE, VENDOR_KIND_LABEL, DAYS_LABEL } from "../../lib/vendors.jsx";
 
 // ---------- 印刷会社・資材仕入先マスタ ----------
 export function VendorSettings({ lineItems }) {
@@ -25,9 +25,10 @@ function VendorList({ kind, lineItems, placeholder, help }) {
   const add = (name) => {
     const n = name.trim();
     if (!n) return;
-    setVendors((v) => [...v, { name: n, kind, memo: "", days: "" }]);
+    setVendors((v) => [...v.filter((x) => !(x.kind === KIND_IGNORE && x.name === n)), { name: n, kind, memo: "", days: "" }]);
   };
   const patch = (name, fields) => setVendors((v) => v.map((x) => (x.kind === kind && x.name === name ? { ...x, ...fields } : x)));
+  const dismiss = (name) => setVendors((v) => [...v, { name, kind: KIND_IGNORE, memo: "", days: "" }]);
   const remove = (name) => setVendors((v) => v.filter((x) => !(x.kind === kind && x.name === name)));
 
   // 今まで同じ種別の明細に入れた会社名のうち、マスタにまだ無いもの
@@ -106,12 +107,17 @@ function VendorList({ kind, lineItems, placeholder, help }) {
       </div>
       {unused.length > 0 && (
         <div className="space-y-1">
-          <p className="text-xs text-[var(--text-muted)]">今までの明細で使った会社(押すと登録):</p>
+          <p className="text-xs text-[var(--text-muted)]">今までの明細で使った会社(押すと登録、×で候補から消す):</p>
           <div className="flex flex-wrap gap-2">
             {unused.map((name) => (
-              <button key={name} onClick={() => add(name)} className="text-xs px-2 py-1 border border-[var(--border)] rounded-md flex items-center gap-1">
-                <Plus size={12} /> {name}
-              </button>
+              <span key={name} className="text-xs border border-[var(--border)] rounded-md flex items-center">
+                <button onClick={() => add(name)} className="px-2 py-1 flex items-center gap-1" title="押すと登録">
+                  <Plus size={12} /> {name}
+                </button>
+                <button onClick={() => dismiss(name)} className="px-1.5 py-1 border-l border-[var(--border)] text-[var(--text-muted)]" title="この候補を消す(会社ではないものなど)">
+                  <X size={12} />
+                </button>
+              </span>
             ))}
           </div>
         </div>

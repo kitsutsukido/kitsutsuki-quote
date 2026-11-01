@@ -11,6 +11,7 @@ const KV_KEY = "zk-quote:vendors";
 export const KIND_PRINT = "print";
 export const KIND_MATERIAL = "material";
 export const KIND_ASSEMBLY = "assembly";
+export const KIND_IGNORE = "ignore"; // 「今までの明細で使った会社」の候補から外した名前(候補にも一覧にも出ない)
 export const DAYS_LABEL = { calendar: "土日も数える", business: "土日を除く" };
 export const VENDOR_KIND_LABEL = { print: "印刷会社", material: "資材仕入先", assembly: "加工・組立の外注先" };
 
@@ -19,7 +20,7 @@ const clean = (list) => {
   const out = [];
   for (const v of Array.isArray(list) ? list : []) {
     const name = String((v && typeof v === "object" ? v.name : v) || "").trim();
-    const kind = v && typeof v === "object" && v.kind === KIND_MATERIAL || v.kind === KIND_ASSEMBLY ? v.kind : KIND_PRINT;
+    const kind = v && typeof v === "object" && v.kind === KIND_MATERIAL || v.kind === KIND_ASSEMBLY || v.kind === KIND_IGNORE ? v.kind : KIND_PRINT;
     const key = `${kind}|${name}`;
     if (name && !seen.has(key)) {
       seen.add(key);

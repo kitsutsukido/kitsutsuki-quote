@@ -10,7 +10,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
   const { vendors } = useVendors();
   // 印刷場所・購入場所に対応するマスタの納期の数え方・メモ
   const vendorNote = (it) => {
-    const v = vendors.find((x) => x.name === (it.submitTo || "").trim() && (isMaterial(it) ? x.kind === "material" : x.kind !== "material"));
+    const v = vendors.find((x) => x.name === (it.submitTo || "").trim() && (isMaterial(it) ? x.kind === "material" : x.kind !== "material" && x.kind !== "ignore"));
     if (!v || (!v.days && !v.memo)) return null;
     return (
       <span className="block text-xs text-[var(--text-muted)]">
