@@ -53,14 +53,6 @@ export async function kvGet(key) {
   return res.json();
 }
 
-// 在庫管理アプリのメンバー(名前・SlackユーザーIDだけ)。{ members, found }
-export async function getInventoryMembers() {
-  const res = await fetch("/api/inventory-members", { headers: CSRF, cache: "no-store" });
-  if (res.status === 401) throw new Error("unauthorized");
-  if (!res.ok) throw new Error(`読み込みに失敗しました(${res.status})`);
-  return res.json();
-}
-
 // opts.baseUpdatedAt: 別の端末が先に保存していたら409(conflict)で断る
 export async function kvPut(key, value, opts = {}) {
   const headers = { "Content-Type": "application/json", ...CSRF };
