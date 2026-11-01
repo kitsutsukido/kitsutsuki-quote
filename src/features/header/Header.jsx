@@ -3,12 +3,9 @@ import { APP_NAME } from "../../lib/constants.js";
 
 // ---------- アプリ上部のヘッダーバー ----------
 // PC幅ではサイドバーが常時表示のため、ハンバーガーは見た目のみ。スマホ幅ではサイドバーの開閉ボタンになる
+// 問題があるときだけ表示する(ふだんは何も出さない)
 const SYNC_LABEL = {
-  checking: ["同期を確認中…", ""],
-  synced: ["同期済み", ""],
-  dirty: ["未送信の変更あり", "text-[var(--accent)]"],
-  saving: ["同期中…", ""],
-  error: ["同期できません(押すと再試行)", "text-[var(--danger)]"],
+  error: ["保存できません(押すと再試行)", "text-[var(--danger)]"],
 };
 
 export function Header({ view, setView, onToggleMenu, syncStatus, onRetrySync }) {
