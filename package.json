@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "node scripts/test-merge.mjs"
+    "test": "node scripts/test-merge.mjs && node scripts/test-reminder.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.475.0",

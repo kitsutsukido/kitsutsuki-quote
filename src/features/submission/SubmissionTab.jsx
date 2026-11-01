@@ -6,7 +6,7 @@ import { submitDeadline, findVendor } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
 
 // ---------- 入稿管理タブ ----------
-export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUpdateProject }) {
+export function SubmissionTab({ project, sessions, lineItems, setLineItems, members = [], onUpdateProject }) {
   const confirmedIds = sessions.filter((s) => s.projectId === project.id && s.status === "確定").map((s) => s.id);
   const items = lineItems.filter((it) => confirmedIds.includes(it.sessionId));
   const { vendors } = useVendors();
@@ -40,6 +40,27 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
     >
       <option>未</option><option>済</option><option>ー</option>
     </select>
+  );
+
+  // 担当者(メンバーマスタから選ぶ)。印刷が無い資材は入稿担当なし
+  const ownerSelect = (it, field, label) => (
+    <label className="flex items-center gap-1 text-xs text-[var(--text-muted)] whitespace-nowrap">
+      {label}
+      <select
+        className="border border-[var(--border)] rounded-md px-1.5 py-1 text-sm text-[var(--text)] bg-[var(--card)] max-w-[7.5rem]"
+        value={members.some((m) => m.id === it[field]) ? it[field] : ""}
+        onChange={(e) => update(it.id, { [field]: e.target.value })}
+      >
+        <option value="">未設定</option>
+        {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+      </select>
+    </label>
+  );
+  const owners = (it) => (
+    <div className="flex flex-wrap gap-x-3 gap-y-1">
+      {!isMaterial(it) && ownerSelect(it, "submitOwner", "入稿担当")}
+      {ownerSelect(it, "buyOwner", "購入担当")}
+    </div>
   );
 
   const daysInput = (it) => (
@@ -136,6 +157,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
               <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span>{vendorNote(it)}</span>
               <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
             </div>
+            {owners(it)}
             <div className="flex items-center justify-between gap-2">{daysInput(it)}<span className="text-xs text-[var(--text-muted)] flex items-center gap-1">期限 {deadlineText(it)}</span></div>
             {submitControl(it)}
           </div>
@@ -151,6 +173,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
               <th className="py-2 px-3 font-normal">内容</th>
               <th className="py-2 px-3 font-normal">仕様</th>
               <th className="py-2 px-3 font-normal text-right whitespace-nowrap">部数</th>
+              <th className="py-2 px-3 font-normal whitespace-nowrap">担当</th>
               <th className="py-2 px-3 font-normal whitespace-nowrap">日数</th>
               <th className="py-2 px-3 font-normal whitespace-nowrap">入稿期限</th>
               <th className="py-2 px-3 font-normal">購入</th>
@@ -164,6 +187,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, onUp
                 <td className="py-2 px-3">{it.name}</td>
                 <td className="py-2 px-3 text-[var(--text-muted)]"><SpecText item={it} /></td>
                 <td className="py-2 px-3 text-right font-mono">{it.qty}</td>
+                <td className="py-2 px-3">{owners(it)}</td>
                 <td className="py-2 px-3">{daysInput(it)}</td>
                 <td className="py-2 px-3">{deadlineText(it)}</td>
                 <td className="py-2 px-3">{purchaseSelect(it)}</td>
