@@ -21,7 +21,7 @@ import {
 // 必ず "zk-quote:" で始まるものに限る(在庫アプリのデータには触れない)。
 
 const KEY_PREFIX = "zk-quote:";
-const MAX_BODY_BYTES = 256 * 1024;
+const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
 const json = (obj, status = 200, headers = {}) =>
   new Response(JSON.stringify(obj), {
@@ -90,6 +90,19 @@ async function handleKv(request, env, key) {
   if (request.method === "PUT") {
     const body = await request.text();
     if (body.length > MAX_BODY_BYTES) return new Response("Payload Too Large", { status: 413 });
+    // 別の端末が先に保存していたら上書きしない(見積もりデータの同期用)。
+    // X-Base-Updated-At: 手元が最後に見た共有データの updatedAt("none"=まだ共有データが無いはず)
+    const base = request.headers.get("X-Base-Updated-At");
+    if (base) {
+      const currentRaw = await env.QUOTE_KV.get(key);
+      let currentAt = "none";
+      try {
+        if (currentRaw) currentAt = JSON.parse(currentRaw).updatedAt || "none";
+      } catch (e) {
+        currentAt = "none";
+      }
+      if (currentAt !== base) return new Response("Conflict", { status: 409 });
+    }
     await env.QUOTE_KV.put(key, body);
     return new Response(body, { status: 200, headers: { "content-type": "application/json; charset=utf-8" } });
   }

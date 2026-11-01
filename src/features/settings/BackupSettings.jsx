@@ -58,6 +58,13 @@ export function BackupSettings() {
       for (const k of keys) {
         window.localStorage.setItem(`zk-quote:${k}`, JSON.stringify(payload.data[k]));
       }
+      // 読み込んだデータは共有データにも反映させる(次の同期で送る印)
+      try {
+        const meta = JSON.parse(window.localStorage.getItem("zk-quote:syncMeta") || "{}");
+        window.localStorage.setItem("zk-quote:syncMeta", JSON.stringify({ ...meta, dirty: true }));
+      } catch (e2) {
+        /* 印を付けられなくても読み込みは続ける */
+      }
       window.location.reload();
     } catch (err) {
       setMessage("ファイルを読み込めませんでした。");

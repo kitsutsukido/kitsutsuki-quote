@@ -53,13 +53,13 @@ export async function kvGet(key) {
   return res.json();
 }
 
-export async function kvPut(key, value) {
-  const res = await fetch(`/api/kv/${encodeURIComponent(key)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...CSRF },
-    body: JSON.stringify(value),
-  });
+// opts.baseUpdatedAt: 別の端末が先に保存していたら409(conflict)で断る
+export async function kvPut(key, value, opts = {}) {
+  const headers = { "Content-Type": "application/json", ...CSRF };
+  if (opts.baseUpdatedAt) headers["X-Base-Updated-At"] = opts.baseUpdatedAt;
+  const res = await fetch(`/api/kv/${encodeURIComponent(key)}`, { method: "PUT", headers, body: JSON.stringify(value) });
   if (res.status === 401) throw new Error("unauthorized");
+  if (res.status === 409) throw new Error("conflict");
   if (!res.ok) throw new Error(`保存に失敗しました(${res.status})`);
 }
 
