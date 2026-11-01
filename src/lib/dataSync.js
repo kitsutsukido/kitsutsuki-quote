@@ -31,11 +31,12 @@ import {
 export const DATA_KEY = "zk-quote:data";
 const MIGRATED_KEY = "zk-quote:migratedToShared";
 const BEFORE_KEY = "zk-quote:backup-before-sync";
-export const DATA_KEYS = ["products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
+export const DATA_KEYS = ["members", "products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
 const SAVE_DELAY_MS = 1200;
 const POLL_MS = 30000;
 
 const SEED = {
+  members: [],
   products: initialProducts,
   projects: initialProjects,
   sessions: initialSessions,
@@ -53,6 +54,7 @@ export const summarize = (d) => ({
 
 // この端末のlocalStorageに残っている(これまでの)データ
 const readLocal = () => ({
+  members: [], // メンバーは共有データだけで持つ
   products: SEED.products, // 商品は共有データだけで持つ(昔の端末のデータには無い)
   projects: loadProjects(SEED.projects),
   sessions: loadSessions(SEED.sessions),

@@ -26,8 +26,9 @@ export function Settings({ products, sync }) {
       <p className="text-lg font-medium text-[var(--ink)]">設定・連携</p>
 
       <BackupSettings
-        data={{ products: sync.products, projects: sync.projects, sessions: sync.sessions, lineItems: sync.lineItems, groups: sync.groups, profitSettings: sync.settings, profitPatterns: sync.patterns }}
+        data={{ members: sync.members, products: sync.products, projects: sync.projects, sessions: sync.sessions, lineItems: sync.lineItems, groups: sync.groups, profitSettings: sync.settings, profitPatterns: sync.patterns }}
         applyData={(d) => {
+          if (d.members) sync.setMembers(d.members);
           if (d.products) sync.setProducts(d.products);
           if (d.projects) sync.setProjects(d.projects);
           if (d.sessions) sync.setSessions(d.sessions);

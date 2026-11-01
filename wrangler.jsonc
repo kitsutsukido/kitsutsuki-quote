@@ -14,5 +14,7 @@
   },
   // 在庫管理アプリと同じKV namespaceを共有(キーは必ず "zk-quote:" で始まるものだけ使う)
   "kv_namespaces": [{ "binding": "QUOTE_KV", "id": "37f283c110dc4de3bd099999fc3f066a" }],
+  // 毎朝9時(日本時間)=0時(UTC)に、入稿期限の当日リマインダーを送る
+  "triggers": { "crons": ["0 0 * * *"] },
   "observability": { "enabled": true }
 }

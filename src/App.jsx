@@ -42,6 +42,7 @@ export default function App({ boot }) {
   // 共有データがあるときは共有データから、無いとき(開発中)はこの端末のlocalStorageから
   const init = (key, loader, seed) => (serverMode ? boot.data[key] ?? seed : loader(seed));
   const [products, setProducts] = useState(() => (serverMode ? boot.data.products ?? initialProducts : initialProducts));
+  const [members, setMembers] = useState(() => (serverMode ? boot.data.members ?? [] : []));
   const [newProductOpen, setNewProductOpen] = useState(false);
   const [projects, setProjects] = useState(() => init("projects", loadProjects, initialProjects));
   const [selectedId, setSelectedId] = useState(deepLink?.selectedId ?? initialProjects[1].id); // 進行中の深海2026を初期表示
@@ -66,8 +67,9 @@ export default function App({ boot }) {
   const sync = useSharedData({
     mode: boot.mode,
     initialUpdatedAt: boot.updatedAt,
-    data: { products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
+    data: { members, products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
     apply: (d) => {
+      if (d.members) setMembers(d.members);
       if (d.products) setProducts(d.products);
       if (d.projects) setProjects(d.projects);
       if (d.sessions) setSessions(d.sessions);
@@ -176,8 +178,8 @@ export default function App({ boot }) {
             />
           )}
 
-          {view === "masters" && <Masters lineItems={lineItems} />}
-          {view === "settings" && <Settings products={products} sync={{ products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
+          {view === "masters" && <Masters lineItems={lineItems} members={members} setMembers={setMembers} />}
+          {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (
             <>
@@ -208,7 +210,7 @@ export default function App({ boot }) {
                 <QuoteTab project={project} projects={projects} setProjects={setProjects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
               )}
               {tab === "submission" && (
-                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} onUpdateProject={(fields) => setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...fields } : p)))} />
+                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} members={members} onUpdateProject={(fields) => setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...fields } : p)))} />
               )}
               {tab === "profit" && (
                 <ProfitTab

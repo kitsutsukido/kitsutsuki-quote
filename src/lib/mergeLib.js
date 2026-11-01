@@ -71,6 +71,7 @@ export function mergeObject(base, mine, theirs) {
 }
 
 const KEY_OF = {
+  members: (o) => o.id,
   products: (o) => o.id,
   projects: (o) => o.id,
   sessions: (o) => o.id,
