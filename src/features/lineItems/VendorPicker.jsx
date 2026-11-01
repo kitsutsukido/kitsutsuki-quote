@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { useVendors } from "../../lib/vendors.jsx";
+import { useVendors, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY } from "../../lib/vendors.jsx";
 
 const norm = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+/g, "");
 
@@ -8,8 +8,11 @@ const norm = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+
 // ・入力した文字で候補を絞り込む(使った回数が多い順)
 // ・よく使う上位5社は、いつでもボタンで選べる
 // 登録にない会社名も、そのまま入力できる。
-export function VendorPicker({ value, onChange, placeholder, lineItems }) {
-  const { vendors } = useVendors();
+export function VendorPicker({ value, onChange, placeholder, lineItems, material }) {
+  const { vendors: all } = useVendors();
+  // 印刷物なら印刷会社と加工・組立の外注先、資材なら資材仕入先だけを候補にする
+  const kind = material ? KIND_MATERIAL : KIND_PRINT;
+  const vendors = useMemo(() => all.filter((v) => v.kind === kind || (!material && v.kind === KIND_ASSEMBLY)).map((v) => v.name), [all, kind]);
   const [open, setOpen] = useState(false);
 
   const ranked = useMemo(() => {

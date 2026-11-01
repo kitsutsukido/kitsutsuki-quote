@@ -256,7 +256,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
         <Field label={material ? "購入場所" : "印刷場所"}>
-          <VendorPicker value={form.submitTo} onChange={(v) => setForm((f) => ({ ...f, submitTo: v }))} placeholder={material ? "シモジマ" : "プリントパック"} lineItems={lineItems} />
+          <VendorPicker value={form.submitTo} onChange={(v) => setForm((f) => ({ ...f, submitTo: v }))} placeholder={material ? "シモジマ" : "プリントパック"} lineItems={lineItems} material={material} />
         </Field>
       </div>
 
