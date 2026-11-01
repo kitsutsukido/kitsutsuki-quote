@@ -1,11 +1,23 @@
 import { SpecText } from "../../components/common/SpecText.jsx";
 import { Upload, Undo2 } from "lucide-react";
 import { isMaterial } from "../../lib/spec.js";
+import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
 
 // ---------- 入稿管理タブ ----------
 export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
   const confirmedIds = sessions.filter((s) => s.projectId === project.id && s.status === "確定").map((s) => s.id);
   const items = lineItems.filter((it) => confirmedIds.includes(it.sessionId));
+  const { vendors } = useVendors();
+  // 印刷場所・購入場所に対応するマスタの納期の数え方・メモ
+  const vendorNote = (it) => {
+    const v = vendors.find((x) => x.name === (it.submitTo || "").trim() && x.kind === (isMaterial(it) ? "material" : "print"));
+    if (!v || (!v.days && !v.memo)) return null;
+    return (
+      <span className="block text-xs text-[var(--text-muted)]">
+        {v.days && <>納期: {DAYS_LABEL[v.days]}</>}{v.days && v.memo && " / "}{v.memo}
+      </span>
+    );
+  };
   const today = new Date().toISOString().slice(0, 10);
 
   const notSubmitted = items.filter((it) => !it.actualDate).length;
@@ -76,7 +88,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
             </div>
             <p className="text-xs text-[var(--text-muted)]"><SpecText item={it} /></p>
             <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span></span>
+              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span>{vendorNote(it)}</span>
               <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
             </div>
             {submitControl(it)}
@@ -100,7 +112,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems }) {
           <tbody>
             {items.map((it) => (
               <tr key={it.id} className="border-b border-[var(--border)] last:border-0">
-                <td className="py-2 px-3">{it.submitTo || "―"}</td>
+                <td className="py-2 px-3">{it.submitTo || "―"}{vendorNote(it)}</td>
                 <td className="py-2 px-3">{it.name}</td>
                 <td className="py-2 px-3 text-[var(--text-muted)]"><SpecText item={it} /></td>
                 <td className="py-2 px-3 text-right font-mono">{it.qty}</td>

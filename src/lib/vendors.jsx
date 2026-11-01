@@ -6,10 +6,11 @@ import { kvGet, kvPut } from "./remote.js";
 const LS_KEY = "zk-quote:vendors";
 const KV_KEY = "zk-quote:vendors";
 
-// 各要素は { name, kind }。kind は "print"(印刷会社) か "material"(資材仕入先)。
+// 各要素は { name, kind, memo, days }。memo は自由記入、days は納期の数え方("calendar"=土日も数える / "business"=土日を除く / ""=未設定)。kind は "print"(印刷会社) か "material"(資材仕入先)。
 // 昔の形(会社名の文字列だけ)は印刷会社として読む。
 export const KIND_PRINT = "print";
 export const KIND_MATERIAL = "material";
+export const DAYS_LABEL = { calendar: "土日も数える", business: "土日を除く" };
 export const VENDOR_KIND_LABEL = { print: "印刷会社", material: "資材仕入先" };
 
 const clean = (list) => {
@@ -21,7 +22,8 @@ const clean = (list) => {
     const key = `${kind}|${name}`;
     if (name && !seen.has(key)) {
       seen.add(key);
-      out.push({ name, kind });
+      const o = v && typeof v === "object" ? v : {};
+      out.push({ name, kind, memo: String(o.memo || ""), days: o.days === "calendar" || o.days === "business" ? o.days : "" });
     }
   }
   return out;
