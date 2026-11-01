@@ -6,19 +6,20 @@ import { kvGet, kvPut } from "./remote.js";
 const LS_KEY = "zk-quote:vendors";
 const KV_KEY = "zk-quote:vendors";
 
-// 各要素は { name, kind, memo, days }。memo は自由記入、days は納期の数え方("calendar"=土日も数える / "business"=土日を除く / ""=未設定)。kind は "print"(印刷会社) か "material"(資材仕入先)。
+// 各要素は { name, kind, memo, days }。memo は自由記入、days は納期の数え方("calendar"=土日も数える / "business"=土日を除く / ""=未設定)。kind は "print"(印刷会社)・"material"(資材仕入先)・"assembly"(加工・組立の外注先)。
 // 昔の形(会社名の文字列だけ)は印刷会社として読む。
 export const KIND_PRINT = "print";
 export const KIND_MATERIAL = "material";
+export const KIND_ASSEMBLY = "assembly";
 export const DAYS_LABEL = { calendar: "土日も数える", business: "土日を除く" };
-export const VENDOR_KIND_LABEL = { print: "印刷会社", material: "資材仕入先" };
+export const VENDOR_KIND_LABEL = { print: "印刷会社", material: "資材仕入先", assembly: "加工・組立の外注先" };
 
 const clean = (list) => {
   const seen = new Set();
   const out = [];
   for (const v of Array.isArray(list) ? list : []) {
     const name = String((v && typeof v === "object" ? v.name : v) || "").trim();
-    const kind = v && typeof v === "object" && v.kind === KIND_MATERIAL ? KIND_MATERIAL : KIND_PRINT;
+    const kind = v && typeof v === "object" && v.kind === KIND_MATERIAL || v.kind === KIND_ASSEMBLY ? v.kind : KIND_PRINT;
     const key = `${kind}|${name}`;
     if (name && !seen.has(key)) {
       seen.add(key);
