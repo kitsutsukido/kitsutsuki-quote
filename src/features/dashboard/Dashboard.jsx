@@ -1,8 +1,10 @@
 import { projectStats } from "../../lib/projectStats.js";
+import { useVendors } from "../../lib/vendors.jsx";
 import { RelatedApps } from "../relatedApps/RelatedApps.jsx";
 
 // ---------- ダッシュボード ----------
 export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
+  const { vendors } = useVendors();
   const active = projects.filter((p) => p.status === "進行中");
   return (
     <div>
@@ -11,7 +13,7 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {active.map((p) => {
           const product = products.find((prod) => prod.id === p.productId);
-          const stats = projectStats(p, sessions, lineItems);
+          const stats = projectStats(p, sessions, lineItems, vendors);
           return (
             <button
               key={p.id}

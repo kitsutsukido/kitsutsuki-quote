@@ -211,7 +211,7 @@ export default function App() {
                 <QuoteTab project={project} projects={projects} setProjects={setProjects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
               )}
               {tab === "submission" && (
-                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} />
+                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} onUpdateProject={(fields) => setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...fields } : p)))} />
               )}
               {tab === "profit" && (
                 <ProfitTab
