@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Chip } from "../../components/common/Chip.jsx";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -30,6 +30,15 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
     const next = [...fees, { id, name: "新しい項目", kind: "rate", value: 0 }];
     // 追加した項目は、どのパターンでも最初は「使う」にする
     materializeAll(fees, (p) => ({ ...p, use: { ...p.use, [id]: true } }));
+    saveSettings({ fees: next });
+  };
+  // 並べ替え(上へ・下へ)。並び順は損益の計算には影響しない
+  const moveFee = (i, d) => {
+    const j = i + d;
+    if (j < 0 || j >= fees.length) return;
+    const next = [...fees];
+    [next[i], next[j]] = [next[j], next[i]];
+    materializeAll(fees);
     saveSettings({ fees: next });
   };
   const removeFee = (f) => {
@@ -78,8 +87,12 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
         </div>
         <p className="text-xs text-[var(--text-muted)] mb-1">手数料・分配の項目(名前・種類・値を変えられます。販売パターンで使う項目を選びます)</p>
         <div className="space-y-2">
-          {fees.map((f) => (
+          {fees.map((f, i) => (
             <div key={f.id} className="flex flex-wrap items-center gap-2">
+              <span className="flex flex-col">
+                <button onClick={() => moveFee(i, -1)} disabled={i === 0} title="上へ" className="text-[var(--text-muted)] disabled:opacity-30"><ChevronUp size={14} /></button>
+                <button onClick={() => moveFee(i, 1)} disabled={i === fees.length - 1} title="下へ" className="text-[var(--text-muted)] disabled:opacity-30"><ChevronDown size={14} /></button>
+              </span>
               <input className={`${inputCls} !w-48`} value={f.name} onChange={(e) => updateFee(f.id, { name: e.target.value })} aria-label="項目名" />
               <select className="border border-[var(--border)] rounded-md px-2 py-1.5 text-sm bg-[var(--card)]" value={f.kind} onChange={(e) => updateFee(f.id, { kind: e.target.value })}>
                 <option value="rate">売上の%</option>
