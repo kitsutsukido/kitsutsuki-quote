@@ -15,8 +15,16 @@ export function dataForGenre(genre, { products, projects, sessions, groups, line
     sessions: gSessions,
     lineItems: lineItems.filter((it) => sessionIds.has(it.sessionId)),
     groups: groups.filter((g) => productIds.has(g.productId)),
-    profitSettings: Object.fromEntries(Object.entries(settings).filter(([id]) => projectIds.has(id))),
-    profitPatterns: patterns.filter((p) => projectIds.has(p.projectId)),
+    // fees(項目の一覧)はシートの1セルに入るよう JSON の文字列にする(Apps Script側は今の版では使わない)
+    profitSettings: Object.fromEntries(
+      Object.entries(settings)
+        .filter(([id]) => projectIds.has(id))
+        .map(([id, s]) => [id, Array.isArray(s.fees) ? { ...s, fees: JSON.stringify(s.fees) } : s])
+    ),
+    // use / overrides(項目ごとの使う・上書き)はシートの1セルに入るよう JSON の文字列にする
+    profitPatterns: patterns
+      .filter((p) => projectIds.has(p.projectId))
+      .map((p) => (p.use ? { ...p, use: JSON.stringify(p.use), overrides: JSON.stringify(p.overrides || {}) } : p)),
   };
 }
 

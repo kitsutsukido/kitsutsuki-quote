@@ -1,15 +1,18 @@
-export function computeBreakeven(costTotal, baseQty, settings, pattern, volumes) {
+import { feesOf, patternFee, feeAmount } from "./profitFees.js";
+
+// fees を省略したときは、settings(とこのパターン)から項目一覧を読み替える
+export function computeBreakeven(costTotal, baseQty, settings, pattern, volumes, fees = feesOf(settings, [pattern])) {
   const unitCost = costTotal / baseQty;
   return volumes.map((vol) => {
     const revenue = vol * settings.price;
-    const facility = revenue * (settings.facilityRate / 100);
-    const local = revenue * (settings.localSalesRate / 100);
-    const royalty = revenue * (settings.royaltyRate / 100);
-    const consign = pattern.consignRate ? revenue * (pattern.consignRate / 100) : 0;
-    const shop = pattern.shopRate ? revenue * (pattern.shopRate / 100) + (pattern.shopFixed || 0) * vol : 0;
-    const fees = facility + local + royalty + consign + shop;
+    let total = 0;
+    for (const f of fees) {
+      const { on, override } = patternFee(pattern, f);
+      if (!on) continue;
+      total += feeAmount(f, override ?? (Number(f.value) || 0), revenue, vol);
+    }
     const cost = unitCost * vol;
-    const profit = revenue - fees - cost;
-    return { vol, revenue, fees, profit, margin: revenue ? profit / revenue : 0 };
+    const profit = revenue - total - cost;
+    return { vol, revenue, fees: total, profit, margin: revenue ? profit / revenue : 0 };
   });
 }
