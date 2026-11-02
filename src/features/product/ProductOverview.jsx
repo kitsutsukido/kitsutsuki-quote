@@ -54,6 +54,18 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
     }
   }
 
+  // 累計の単価:確定見積もりがある全ロットの経費の合計 ÷ 印刷部数の合計
+  const cumulative = productProjects.reduce(
+    (acc, project) => {
+      const conf = sessions.find((x) => x.projectId === project.id && x.status === "確定");
+      if (!conf || !project.qty) return acc;
+      const cost = lineItems.filter((it) => it.sessionId === conf.id).reduce((t, it) => t + it.amount, 0);
+      return { cost: acc.cost + cost, qty: acc.qty + project.qty, lots: acc.lots + 1 };
+    },
+    { cost: 0, qty: 0, lots: 0 }
+  );
+  const cumulativeUnit = cumulative.qty ? cumulative.cost / cumulative.qty : null;
+
   const submit = () => {
     const round = form.round.trim();
     if (!round) return;
@@ -72,6 +84,16 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
           <p className="text-xl font-medium font-mono text-[var(--ink)]">
             {unitPrice != null ? `${unitPrice.toFixed(1)}円` : "―"}
           </p>
+          {latest && <p className="text-[11px] text-[var(--text-muted)]">{latest.project.round}・{latest.project.qty}部</p>}
+          <p className="text-xs text-[var(--text-muted)] mt-3 mb-1">累計の単価</p>
+          <p className="text-lg font-medium font-mono text-[var(--ink)]">
+            {cumulativeUnit != null ? `${cumulativeUnit.toFixed(1)}円` : "―"}
+          </p>
+          {cumulative.lots > 0 && (
+            <p className="text-[11px] text-[var(--text-muted)]">
+              {cumulative.lots}ロット・{cumulative.qty.toLocaleString()}部・経費 {cumulative.cost.toLocaleString()}円
+            </p>
+          )}
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
           <p className="text-xs text-[var(--text-muted)] mb-1">
