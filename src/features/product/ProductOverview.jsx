@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven, breakevenQty } from "../../lib/breakeven.js";
@@ -20,7 +20,7 @@ function findLatestConfirmedLot(product, projects, sessions) {
 }
 
 // ---------- 商品サマリー画面 ----------
-export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot }) {
+export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot, onDeleteLot }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ round: "", qty: "500", baseId: "" });
 
@@ -147,17 +147,27 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {productProjects.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => onOpenProject(p.id)}
-            className="text-left bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 hover:border-[var(--accent)] transition"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[var(--ink)]">{p.round}</p>
-              <span className={`text-[11px] shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent)]"}`}>{p.status}</span>
-            </div>
-            <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">{p.qty}部</p>
-          </button>
+          <div key={p.id} className="relative">
+            <button
+              onClick={() => onOpenProject(p.id)}
+              className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 pr-11 hover:border-[var(--accent)] transition"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-[var(--ink)]">{p.round}</p>
+                <span className={`text-[11px] shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent)]"}`}>{p.status}</span>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">{p.qty}部</p>
+            </button>
+            {onDeleteLot && (
+              <button
+                onClick={() => onDeleteLot(p)}
+                title="このロットを削除"
+                className="absolute top-1/2 -translate-y-1/2 right-3 p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--paper)]"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
