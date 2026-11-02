@@ -121,6 +121,22 @@ export default function App({ boot }) {
     };
     setProjects((prev) => [...prev, newProject]);
     const base = baseSessionId ? sessions.find((x) => x.id === baseSessionId) : null;
+    // 収支設定・販売パターンは前のロットから引き継ぐ(金額のもとにした確定見積もりのロット、なければこの商品の一番新しいロット)
+    const sameProduct = projects.filter((p) => p.productId === productId);
+    const srcProject = (base && projects.find((p) => p.id === base.projectId)) || sameProduct[sameProduct.length - 1];
+    if (srcProject) {
+      const srcSettings = settings[srcProject.id];
+      if (srcSettings) {
+        setSettings((prev) => ({ ...prev, [newProject.id]: JSON.parse(JSON.stringify(srcSettings)) }));
+      }
+      const srcPatterns = patterns.filter((p) => p.projectId === srcProject.id);
+      if (srcPatterns.length) {
+        setPatterns((prev) => [
+          ...prev,
+          ...srcPatterns.map((p, i) => ({ ...JSON.parse(JSON.stringify(p)), id: `pp-${Date.now()}-${i}`, projectId: newProject.id })),
+        ]);
+      }
+    }
     if (base) {
       const sid = `qs-${Date.now()}`;
       const baseProject = projects.find((p) => p.id === base.projectId);
@@ -145,6 +161,26 @@ export default function App({ boot }) {
     }
     setSelectedId(newProject.id);
     setView("project");
+  };
+
+  // ロットの削除。見積もり・明細・収支設定・販売パターンもまとめて消す(元に戻せない)
+  const deleteLot = (target) => {
+    if (projects.length <= 1) return window.alert("最後の1つのロットは削除できません。");
+    const sids = sessions.filter((x) => x.projectId === target.id).map((x) => x.id);
+    const itemCount = lineItems.filter((it) => sids.includes(it.sessionId)).length;
+    if (!window.confirm(`「${target.round}」を削除します。\n見積もり${sids.length}件・明細${itemCount}件・収支設定・販売パターンも一緒に消え、元に戻せません。\n(念のため、設定の「データの控え」で先に書き出しておくと安心です)\nよろしいですか？`)) return;
+    setProjects((prev) => prev.filter((p) => p.id !== target.id));
+    setSessions((prev) => prev.filter((x) => x.projectId !== target.id));
+    setLineItems((prev) => prev.filter((it) => !sids.includes(it.sessionId)));
+    setSettings((prev) => {
+      const next = { ...prev };
+      delete next[target.id];
+      return next;
+    });
+    setPatterns((prev) => prev.filter((p) => p.projectId !== target.id));
+    const rest = projects.filter((p) => p.id !== target.id);
+    setSelectedId((rest.find((p) => p.productId === target.productId) || rest[0]).id);
+    openProductOverview(target.productId);
   };
 
   return (
@@ -206,7 +242,7 @@ export default function App({ boot }) {
               >
                 {product.name}
               </button>
-              <LotHeader key={project.id} project={project} onSave={(patch) => setProjects((ps) => ps.map((x) => (x.id === project.id ? { ...x, ...patch } : x)))} />
+              <LotHeader key={project.id} project={project} onSave={(patch) => setProjects((ps) => ps.map((x) => (x.id === project.id ? { ...x, ...patch } : x)))} onDelete={() => deleteLot(project)} />
 
               <div className="flex gap-1 border-b border-[var(--border)] mb-4">
                 {tabs.map((t) => (

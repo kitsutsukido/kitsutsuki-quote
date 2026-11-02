@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
 
-// ロット名(例: 2025年11月ロット)と印刷部数を直せる見出し
-export function LotHeader({ project, onSave }) {
+// ロット名(例: 2025年11月ロット)と印刷部数を直せる見出し。直す画面からロットの削除もできる(onDelete があるとき)
+export function LotHeader({ project, onSave, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [round, setRound] = useState(project.round);
   const [qty, setQty] = useState(String(project.qty));
@@ -47,6 +47,11 @@ export function LotHeader({ project, onSave }) {
       </span>
       <button onClick={save} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">保存</button>
       <button onClick={() => setEditing(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">取消</button>
+      {onDelete && (
+        <button onClick={onDelete} className="ml-auto text-sm px-3 py-1.5 border border-[var(--danger)] text-[var(--danger)] rounded-md flex items-center gap-1">
+          <Trash2 size={14} /> このロットを削除
+        </button>
+      )}
     </div>
   );
 }
