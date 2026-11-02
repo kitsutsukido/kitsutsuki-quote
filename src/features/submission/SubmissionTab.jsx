@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SpecText } from "../../components/common/SpecText.jsx";
 import { CircleCheck, Undo2 } from "lucide-react";
-import { isMaterial, isAssembly } from "../../lib/spec.js";
+import { isMaterial, isAssembly, specString } from "../../lib/spec.js";
 import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
 import { submitDeadline, findVendor, deliveryDateOf, localToday } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -80,12 +80,28 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
     </select>
   );
 
+  // ---- まとめた行(同じ会社・同じ仕様の明細)も1件の明細と同じ部品で扱う ----
+  // まとめた行は { ...先頭の明細, __ids, __items, __mixed } 。値がばらばらな項目は __mixed に入る。
+  // 欄を変えると、まとめた明細すべてに同じ値が入る。
+  const MIXED = "__mixed";
+  const idsOf = (it) => it.__ids || [it.id];
+  const listOf = (it) => it.__items || [it];
+  const isMixed = (it, f) => !!it.__mixed?.has(f);
+  const apply = (it, fields, onlyIds) => {
+    const ids = onlyIds || idsOf(it);
+    setLineItems((prev) => prev.map((x) => (ids.includes(x.id) ? { ...x, ...(typeof fields === "function" ? fields(x) : fields) } : x)));
+  };
+  const mixedOption = (it, f) => (isMixed(it, f) ? <option value={MIXED} disabled>ばらばら</option> : null);
+  // 「入稿した」:入稿日を今日に。購入が未(または未設定)なら済みに(「ー」=購入なし はそのまま)。取り消しても購入は戻さない。
+  const markSubmitted = (x) => ({ actualDate: today, ...(x.purchaseStatus === "ー" || x.purchaseStatus === "済" ? {} : { purchaseStatus: "済" }) });
+
   const purchaseSelect = (it) => (
     <select
       className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
-      value={it.purchaseStatus}
-      onChange={(e) => update(it.id, { purchaseStatus: e.target.value })}
+      value={isMixed(it, "purchaseStatus") ? MIXED : it.purchaseStatus}
+      onChange={(e) => apply(it, { purchaseStatus: e.target.value })}
     >
+      {mixedOption(it, "purchaseStatus")}
       <option>未</option><option>済</option><option>ー</option>
     </select>
   );
@@ -96,9 +112,10 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
       {label}
       <select
         className="border border-[var(--border)] rounded-md px-1.5 py-1 text-sm text-[var(--text)] bg-[var(--card)] max-w-[7.5rem]"
-        value={members.some((m) => m.id === it[field]) ? it[field] : ""}
-        onChange={(e) => update(it.id, { [field]: e.target.value })}
+        value={isMixed(it, field) ? MIXED : members.some((m) => m.id === it[field]) ? it[field] : ""}
+        onChange={(e) => apply(it, { [field]: e.target.value })}
       >
+        {mixedOption(it, field)}
         <option value="">未設定</option>
         {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
       </select>
@@ -120,17 +137,19 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
         type="number"
         min="0"
         className="border border-[var(--border)] rounded-md px-1.5 py-1 text-sm w-16 text-[var(--text)]"
-        value={it.printDays ?? ""}
-        onChange={(e) => update(it.id, { printDays: e.target.value === "" ? "" : Number(e.target.value) })}
+        value={isMixed(it, "printDays") ? "" : it.printDays ?? ""}
+        placeholder={isMixed(it, "printDays") ? "ばらばら" : ""}
+        onChange={(e) => apply(it, { printDays: e.target.value === "" ? "" : Number(e.target.value) })}
       />
       日
       </span>
     </label>
   );
   const deadlineText = (it) => {
+    if (isMixed(it, "printDays")) return <span className="text-xs text-[var(--text-muted)]">ばらばら</span>;
     const dl = deadlineOf(it);
     if (!dl.date) return <span className="text-xs text-[var(--text-muted)]">―</span>;
-    const late = !it.actualDate && dl.date < today;
+    const late = listOf(it).some((x) => !x.actualDate) && dl.date < today;
     return (
       <span className={`text-sm font-mono whitespace-nowrap ${late ? "text-[var(--danger)]" : ""}`}>
         {dl.date}
@@ -141,18 +160,21 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
 
   // 納品日: 入稿した日+日数で自動。指定がある場合は手で書き換えられる
   const deliveryControl = (it) => {
-    const dv = deliveryDateOf(it, vendors);
+    const dvs = listOf(it).map((x) => deliveryDateOf(x, vendors));
+    const same = dvs.every((d) => d.date === dvs[0].date);
+    const dv = same ? dvs[0] : { date: "", manual: dvs.some((d) => d.manual) };
+    const anyManual = dvs.some((d) => d.manual);
     return (
       <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] whitespace-nowrap">
-        納品{dv.manual ? "(指定)" : dv.date ? "(予定)" : ""}
+        納品{!same ? "(ばらばら)" : dv.manual ? "(指定)" : dv.date ? "(予定)" : ""}
         <input
           type="date"
           className="border border-[var(--border)] rounded-md px-2 py-1 text-sm text-[var(--text)]"
           value={dv.date}
-          onChange={(e) => update(it.id, { deliveryDate: e.target.value })}
+          onChange={(e) => apply(it, { deliveryDate: e.target.value })}
         />
-        {dv.manual && (
-          <button onClick={() => update(it.id, { deliveryDate: "" })} className="underline" title="手で入れた日をやめて、入稿日+日数の自動に戻す">
+        {anyManual && (
+          <button onClick={() => apply(it, { deliveryDate: "" })} className="underline" title="手で入れた日をやめて、入稿日+日数の自動に戻す">
             自動に戻す
           </button>
         )}
@@ -161,31 +183,127 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
   };
 
   const submitControl = (it) => {
-    const dl = deadlineOf(it).date;
-    const isOverdue = dl && !it.actualDate && dl < today;
-    return it.actualDate ? (
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="bg-[var(--success-soft)] text-[var(--success)] rounded-md px-2 py-1 text-xs flex items-center gap-1 whitespace-nowrap">
-          入稿済
-        </span>
-        <input type="date" className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
-          value={it.actualDate} onChange={(e) => update(it.id, { actualDate: e.target.value })} />
-        <button onClick={() => update(it.id, { actualDate: "", deliveryDate: "" })}
-          className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
-          <Undo2 size={12} /> 取り消す
-        </button>
-        {deliveryControl(it)}
-      </div>
-    ) : (
+    const list = listOf(it);
+    const done = list.filter((x) => x.actualDate);
+    const dl = isMixed(it, "printDays") ? "" : deadlineOf(it).date;
+    const isOverdue = dl && done.length < list.length && dl < today;
+    if (done.length === list.length && !isMixed(it, "actualDate")) {
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="bg-[var(--success-soft)] text-[var(--success)] rounded-md px-2 py-1 text-xs flex items-center gap-1 whitespace-nowrap">
+            入稿済
+          </span>
+          <input type="date" className="border border-[var(--border)] rounded-md px-2 py-1 text-sm"
+            value={it.actualDate} onChange={(e) => apply(it, { actualDate: e.target.value })} />
+          <button onClick={() => apply(it, { actualDate: "", deliveryDate: "" })}
+            className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
+            <Undo2 size={12} /> 取り消す
+          </button>
+          {deliveryControl(it)}
+        </div>
+      );
+    }
+    const rest = list.filter((x) => !x.actualDate).map((x) => x.id);
+    return (
       <div className="flex flex-wrap items-center gap-2">
         {isOverdue && <span className="text-xs text-[var(--danger)]">期限超過（{dl}）</span>}
-        <button onClick={() => update(it.id, { actualDate: today, ...(it.purchaseStatus === "ー" || it.purchaseStatus === "済" ? {} : { purchaseStatus: "済" }) })}
-          className="text-xs border border-[var(--accent)] text-[var(--accent)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
-          <CircleCheck size={12} /> 入稿した
-        </button>
+        {done.length > 0 && (
+          <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
+            {done.length === list.length ? "入稿済(日付がばらばら)" : `一部入稿済(${done.length}/${list.length}件)`}
+          </span>
+        )}
+        {rest.length > 0 && (
+          <button onClick={() => apply(it, markSubmitted, rest)}
+            className="text-xs border border-[var(--accent)] text-[var(--accent)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
+            <CircleCheck size={12} /> {done.length > 0 ? "残りも入稿した" : "入稿した"}
+          </button>
+        )}
       </div>
     );
   };
+
+  // ---- 印刷会社(印刷・購入場所・依頼先)ごとに分け、その中で同じ仕様の明細を1行にまとめる ----
+  const MERGE_FIELDS = ["submitOwner", "buyOwner", "purchaseStatus", "printDays", "actualDate", "deliveryDate"];
+  const sections = [];
+  for (const it of items) {
+    const vendor = (it.submitTo || "").trim();
+    let sec = sections.find((x) => x.vendor === vendor);
+    if (!sec) sections.push((sec = { vendor, groups: [] }));
+    const key = `${vendor}|${it.kind || "print"}|${specString(it)}`;
+    let g = sec.groups.find((x) => x.key === key);
+    if (!g) sec.groups.push((g = { key, items: [] }));
+    g.items.push(it);
+  }
+  sections.sort((a, b) => (a.vendor === "") - (b.vendor === "")); // 場所が未設定の明細は最後
+  for (const sec of sections) {
+    for (const g of sec.groups) {
+      if (g.items.length === 1) {
+        g.row = g.items[0];
+        continue;
+      }
+      const mixed = new Set(MERGE_FIELDS.filter((f) => new Set(g.items.map((x) => x[f] ?? "")).size > 1));
+      g.row = { ...g.items[0], __ids: g.items.map((x) => x.id), __items: g.items, __mixed: mixed };
+    }
+  }
+  const [openGroups, setOpenGroups] = useState({});
+  const toggleGroup = (key) => setOpenGroups((o) => ({ ...o, [key]: !o[key] }));
+  // 同じ名前が並ぶとき(OPPなど)は「OPP ×4」のようにまとめる
+  const groupNames = (g) => {
+    const count = new Map();
+    for (const x of g.items) count.set(x.name, (count.get(x.name) || 0) + 1);
+    return [...count].map(([n, c]) => (c > 1 ? `${n} ×${c}` : n)).join("・");
+  };
+  const groupQty = (g) => [...new Set(g.items.map((x) => x.qty))].join("・");
+  const sectionHead = (sec) => {
+    const first = sec.groups[0].items[0];
+    const all = sec.groups.flatMap((g) => g.items);
+    const left = all.filter((x) => !x.actualDate).length;
+    return (
+      <>
+        <span className="font-medium text-[var(--ink)]">{sec.vendor || "(場所が未設定)"}</span>
+        <span className="text-xs text-[var(--text-muted)] ml-2">{all.length}件{left > 0 ? `・未入稿${left}件` : "・すべて入稿済"}</span>
+        {vendorNote(first)}
+      </>
+    );
+  };
+  const toggleButton = (g) =>
+    g.items.length > 1 && (
+      <button onClick={() => toggleGroup(g.key)} className="block text-xs text-[var(--accent)] underline mt-0.5 whitespace-nowrap">
+        {openGroups[g.key] ? "まとめて表示に戻す" : `個別に表示(${g.items.length}件)`}
+      </button>
+    );
+
+  const mobileCard = (it, { names, qty, toggle, child = false } = {}) => (
+    <div key={it.__ids ? it.__ids.join(",") : it.id} className={`border border-[var(--border)] rounded-lg p-3 space-y-2 ${child ? "ml-4 bg-[var(--paper)]" : "bg-[var(--card)]"}`}>
+      <div className="flex justify-between items-baseline gap-2">
+        <span className="text-sm font-medium text-[var(--ink)]">{names ?? it.name}</span>
+        <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{qty ?? it.qty}部</span>
+      </div>
+      {toggle}
+      <p className="text-xs text-[var(--text-muted)]"><SpecText item={it} /></p>
+      <label className="flex items-center gap-1.5 text-sm text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
+      {owners(it)}
+      <div className="flex items-center justify-between gap-2">{daysInput(it)}<span className="text-xs text-[var(--text-muted)] flex items-center gap-1">期限 {deadlineText(it)}</span></div>
+      {submitControl(it)}
+    </div>
+  );
+
+  const tableRow = (it, { names, qty, toggle, child = false } = {}) => (
+    <tr key={it.__ids ? it.__ids.join(",") : it.id} className={`border-b border-[var(--border)] last:border-0 ${child ? "bg-[var(--paper)]" : ""}`}>
+      <td className={`py-2 px-2 ${child ? "pl-6" : ""}`}>
+        {child && <span className="text-[var(--text-muted)]">└ </span>}
+        {names ?? it.name}
+        {toggle}
+      </td>
+      <td className="py-2 px-2 text-[var(--text-muted)]"><SpecText item={it} /></td>
+      <td className="py-2 px-2 text-right font-mono">{qty ?? it.qty}</td>
+      <td className="py-2 px-2">{owners(it)}</td>
+      <td className="py-2 px-2">{daysInput(it, true)}</td>
+      <td className="py-2 px-2">{deadlineText(it)}</td>
+      <td className="py-2 px-2">{purchaseSelect(it)}</td>
+      <td className="py-2 px-2">{submitControl(it)}</td>
+    </tr>
+  );
 
   return (
     <div className="space-y-4">
@@ -233,34 +351,32 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
         </div>
       </div>
 
-      {/* スマホ: 1明細1カードで縦に表示 */}
-      <div className="md:hidden space-y-3">
-        {items.map((it) => (
-          <div key={it.id} className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 space-y-2">
-            <div className="flex justify-between items-baseline gap-2">
-              <span className="text-sm font-medium text-[var(--ink)]">{it.name}</span>
-              <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{it.qty}部</span>
-            </div>
-            <p className="text-xs text-[var(--text-muted)]"><SpecText item={it} /></p>
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : isAssembly(it) ? "依頼先" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span>{vendorNote(it)}</span>
-              <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
-            </div>
-            {owners(it)}
-            <div className="flex items-center justify-between gap-2">{daysInput(it)}<span className="text-xs text-[var(--text-muted)] flex items-center gap-1">期限 {deadlineText(it)}</span></div>
-            {submitControl(it)}
+      {/* スマホ: 会社ごとに、同じ仕様は1枚のカードにまとめて縦に表示 */}
+      <div className="md:hidden space-y-4">
+        {sections.map((sec) => (
+          <div key={sec.vendor || "(none)"} className="space-y-2">
+            <div className="px-1">{sectionHead(sec)}</div>
+            {sec.groups.map((g) =>
+              g.items.length === 1 ? (
+                mobileCard(g.row)
+              ) : (
+                <div key={g.key} className="space-y-2">
+                  {mobileCard(g.row, { names: groupNames(g), qty: groupQty(g), toggle: toggleButton(g) })}
+                  {openGroups[g.key] && g.items.map((x) => mobileCard(x, { child: true }))}
+                </div>
+              )
+            )}
           </div>
         ))}
       </div>
 
-      {/* PC: 表で表示 */}
+      {/* PC: 会社ごとの見出しの下に、同じ仕様は1行にまとめて表で表示 */}
       <div className="hidden md:block bg-[var(--card)] border border-[var(--border)] rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left">
-              <th className="py-2 px-2 font-normal min-w-[6.5rem]">印刷・<br />購入場所</th>
-              <th className="py-2 px-2 font-normal min-w-[7.5rem]">内容</th>
-              <th className="py-2 px-2 font-normal min-w-[8rem]">仕様</th>
+              <th className="py-2 px-2 font-normal min-w-[9rem]">内容</th>
+              <th className="py-2 px-2 font-normal min-w-[9rem]">仕様</th>
               <th className="py-2 px-2 font-normal text-right whitespace-nowrap">部数</th>
               <th className="py-2 px-2 font-normal whitespace-nowrap">担当</th>
               <th className="py-2 px-2 font-normal whitespace-nowrap">日数</th>
@@ -270,19 +386,19 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
             </tr>
           </thead>
           <tbody>
-            {items.map((it) => (
-              <tr key={it.id} className="border-b border-[var(--border)] last:border-0">
-                <td className="py-2 px-2">{it.submitTo || "―"}{vendorNote(it)}</td>
-                <td className="py-2 px-2">{it.name}</td>
-                <td className="py-2 px-2 text-[var(--text-muted)]"><SpecText item={it} /></td>
-                <td className="py-2 px-2 text-right font-mono">{it.qty}</td>
-                <td className="py-2 px-2">{owners(it)}</td>
-                <td className="py-2 px-2">{daysInput(it, true)}</td>
-                <td className="py-2 px-2">{deadlineText(it)}</td>
-                <td className="py-2 px-2">{purchaseSelect(it)}</td>
-                <td className="py-2 px-2">{submitControl(it)}</td>
-              </tr>
-            ))}
+            {sections.map((sec) => [
+              <tr key={`h-${sec.vendor}`} className="bg-[var(--paper)] border-b border-[var(--border)]">
+                <td colSpan={8} className="py-1.5 px-2">{sectionHead(sec)}</td>
+              </tr>,
+              ...sec.groups.flatMap((g) =>
+                g.items.length === 1
+                  ? [tableRow(g.row)]
+                  : [
+                      tableRow(g.row, { names: groupNames(g), qty: groupQty(g), toggle: toggleButton(g) }),
+                      ...(openGroups[g.key] ? g.items.map((x) => tableRow(x, { child: true })) : []),
+                    ]
+              ),
+            ])}
           </tbody>
         </table>
       </div>
