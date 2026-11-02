@@ -111,9 +111,11 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
     </div>
   );
 
-  const daysInput = (it) => (
-    <label className="flex items-center gap-1 text-[var(--text-muted)] text-xs whitespace-nowrap">
+  // stacked=true: 表(パソコン)用。「納品日数」と入力欄を2行に分けて、列の幅を狭くする
+  const daysInput = (it, stacked = false) => (
+    <label className={`flex ${stacked ? "flex-col items-start gap-0.5" : "items-center gap-1"} text-[var(--text-muted)] text-xs whitespace-nowrap`}>
       {isMaterial(it) ? "納品日数" : isAssembly(it) ? "作業日数" : "印刷日数"}
+      <span className="flex items-center gap-1">
       <input
         type="number"
         min="0"
@@ -122,6 +124,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
         onChange={(e) => update(it.id, { printDays: e.target.value === "" ? "" : Number(e.target.value) })}
       />
       日
+      </span>
     </label>
   );
   const deadlineText = (it) => {
@@ -255,29 +258,29 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left">
-              <th className="py-2 px-3 font-normal whitespace-nowrap">印刷・購入場所</th>
-              <th className="py-2 px-3 font-normal">内容</th>
-              <th className="py-2 px-3 font-normal">仕様</th>
-              <th className="py-2 px-3 font-normal text-right whitespace-nowrap">部数</th>
-              <th className="py-2 px-3 font-normal whitespace-nowrap">担当</th>
-              <th className="py-2 px-3 font-normal whitespace-nowrap">日数</th>
-              <th className="py-2 px-3 font-normal whitespace-nowrap">入稿・購入期限</th>
-              <th className="py-2 px-3 font-normal">購入</th>
-              <th className="py-2 px-3 font-normal whitespace-nowrap">入稿状況</th>
+              <th className="py-2 px-2 font-normal min-w-[6.5rem]">印刷・<br />購入場所</th>
+              <th className="py-2 px-2 font-normal min-w-[7.5rem]">内容</th>
+              <th className="py-2 px-2 font-normal min-w-[8rem]">仕様</th>
+              <th className="py-2 px-2 font-normal text-right whitespace-nowrap">部数</th>
+              <th className="py-2 px-2 font-normal whitespace-nowrap">担当</th>
+              <th className="py-2 px-2 font-normal whitespace-nowrap">日数</th>
+              <th className="py-2 px-2 font-normal">入稿・<br />購入期限</th>
+              <th className="py-2 px-2 font-normal">購入</th>
+              <th className="py-2 px-2 font-normal whitespace-nowrap">入稿状況</th>
             </tr>
           </thead>
           <tbody>
             {items.map((it) => (
               <tr key={it.id} className="border-b border-[var(--border)] last:border-0">
-                <td className="py-2 px-3">{it.submitTo || "―"}{vendorNote(it)}</td>
-                <td className="py-2 px-3">{it.name}</td>
-                <td className="py-2 px-3 text-[var(--text-muted)]"><SpecText item={it} /></td>
-                <td className="py-2 px-3 text-right font-mono">{it.qty}</td>
-                <td className="py-2 px-3">{owners(it)}</td>
-                <td className="py-2 px-3">{daysInput(it)}</td>
-                <td className="py-2 px-3">{deadlineText(it)}</td>
-                <td className="py-2 px-3">{purchaseSelect(it)}</td>
-                <td className="py-2 px-3">{submitControl(it)}</td>
+                <td className="py-2 px-2">{it.submitTo || "―"}{vendorNote(it)}</td>
+                <td className="py-2 px-2">{it.name}</td>
+                <td className="py-2 px-2 text-[var(--text-muted)]"><SpecText item={it} /></td>
+                <td className="py-2 px-2 text-right font-mono">{it.qty}</td>
+                <td className="py-2 px-2">{owners(it)}</td>
+                <td className="py-2 px-2">{daysInput(it, true)}</td>
+                <td className="py-2 px-2">{deadlineText(it)}</td>
+                <td className="py-2 px-2">{purchaseSelect(it)}</td>
+                <td className="py-2 px-2">{submitControl(it)}</td>
               </tr>
             ))}
           </tbody>
