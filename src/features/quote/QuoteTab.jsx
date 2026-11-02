@@ -70,8 +70,11 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
           id: `qli-${Date.now()}-${i}`,
           sessionId: id,
           processes: [...(it.processes || [])],
+          // 入稿・購入の進捗はロットごとなので引き継がない(担当・日数は引き継ぐ)
           purchaseStatus: "未",
           actualDate: "",
+          deliveryDate: "",
+          plannedDate: "",
         }));
       setLineItems((prev) => [...prev, ...copies]);
     }
