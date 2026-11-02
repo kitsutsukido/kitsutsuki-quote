@@ -18,8 +18,14 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
   const [sessionLabelDraft, setSessionLabelDraft] = useState("");
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
+  // 念のため:選んでいる見積もりがこのロットのものでなければ(ロットを切り替えた直後など)、このロットの見積もりに戻す。
+  // 以前はロットを切り替えても前のロットの明細を表示したままになり、編集・追加が前のロットに入る危険があった。
+  if (activeSessionId && !projectSessions.some((x) => x.id === activeSessionId)) {
+    const fallback = projectSessions.find((x) => x.status === "確定")?.id || projectSessions[0]?.id;
+    if (fallback !== activeSessionId) setActiveSessionId(fallback);
+  }
   const activeSession = projectSessions.find((x) => x.id === activeSessionId);
-  const items = lineItems.filter((it) => it.sessionId === activeSessionId);
+  const items = activeSession ? lineItems.filter((it) => it.sessionId === activeSessionId) : [];
   const total = items.reduce((s, it) => s + it.amount, 0);
 
   // グループの木に、このセッションの明細を割り当てる(小計・点数は配下すべてを含む)。明細のない枝は表示しない

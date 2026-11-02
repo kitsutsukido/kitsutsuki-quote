@@ -265,13 +265,14 @@ export default function App({ boot }) {
               </div>
 
               {tab === "quote" && (
-                <QuoteTab project={project} projects={projects} setProjects={setProjects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
+                <QuoteTab key={project.id} project={project} projects={projects} setProjects={setProjects} sessions={sessions} setSessions={setSessions} groups={groups} setGroups={setGroups} lineItems={lineItems} setLineItems={setLineItems} />
               )}
               {tab === "submission" && (
-                <SubmissionTab project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} members={members} onUpdateProject={(fields) => setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...fields } : p)))} />
+                <SubmissionTab key={project.id} project={project} sessions={sessions} lineItems={lineItems} setLineItems={setLineItems} members={members} onUpdateProject={(fields) => setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, ...fields } : p)))} />
               )}
               {tab === "profit" && (
                 <ProfitTab
+                  key={project.id}
                   project={project}
                   sessions={sessions}
                   lineItems={lineItems}
