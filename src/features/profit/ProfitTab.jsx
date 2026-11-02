@@ -93,8 +93,8 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
   };
   const unit = (f) => (f.kind === "yen" ? "円/部" : "%");
 
-  // 100部きざみで、刷った部数(または1,200部)まで
-  const maxVol = Math.max(1200, Math.ceil((project.qty || 0) / 100) * 100);
+  // 100部きざみで、1,000部(刷った部数がそれより多ければその部数)まで
+  const maxVol = Math.max(1000, Math.ceil((project.qty || 0) / 100) * 100);
   const volumes = Array.from({ length: maxVol / 100 }, (_, i) => (i + 1) * 100);
   const rows = activePattern ? computeBreakeven(costTotal, project.qty, s, activePattern, volumes, fees) : [];
   const beQty = activePattern ? breakevenQty(costTotal, s, activePattern, fees) : null;
