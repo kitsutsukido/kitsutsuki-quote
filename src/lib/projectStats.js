@@ -1,4 +1,4 @@
-import { submitDeadline } from "./deadlines.js";
+import { submitDeadline, localToday } from "./deadlines.js";
 
 export function projectStats(project, sessions, lineItems, vendors) {
   const projectSessions = sessions.filter((s) => s.projectId === project.id);
@@ -7,7 +7,7 @@ export function projectStats(project, sessions, lineItems, vendors) {
     return { hasConfirmed: false, quoteStage: projectSessions.length ? `仮見積もり中(${projectSessions.length}回)` : "見積もり未作成" };
   }
   const items = lineItems.filter((it) => it.sessionId === confirmed.id);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
   const submitted = items.filter((it) => it.actualDate).length;
   const overdue = items.filter((it) => {
     const d = submitDeadline(it, project, vendors).date;

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { SpecText } from "../../components/common/SpecText.jsx";
-import { Upload, Undo2 } from "lucide-react";
+import { CircleCheck, Undo2 } from "lucide-react";
 import { isMaterial, isAssembly } from "../../lib/spec.js";
 import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
-import { submitDeadline, findVendor, deliveryDateOf } from "../../lib/deadlines.js";
+import { submitDeadline, findVendor, deliveryDateOf, localToday } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
 
 // ---------- 入稿管理タブ ----------
@@ -21,7 +21,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
       </span>
     );
   };
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
 
   const notSubmitted = items.filter((it) => !it.actualDate).length;
   const notPurchased = items.filter((it) => it.purchaseStatus !== "済").length;
@@ -31,6 +31,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
     return d && !it.actualDate && d < today;
   }).length;
 
+  // 「入稿した」を押したとき、購入が未(または未設定)なら済みにする(「ー」=購入なし はそのまま)。取り消しても購入は戻さない。
   const update = (id, fields) => setLineItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...fields } : it)));
 
   // 担当の一括設定。選んだ担当を、このロットの確定見積もりの明細すべてに入れる
@@ -175,9 +176,9 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
     ) : (
       <div className="flex flex-wrap items-center gap-2">
         {isOverdue && <span className="text-xs text-[var(--danger)]">期限超過（{dl}）</span>}
-        <button onClick={() => update(it.id, { actualDate: today })}
+        <button onClick={() => update(it.id, { actualDate: today, ...(it.purchaseStatus === "ー" || it.purchaseStatus === "済" ? {} : { purchaseStatus: "済" }) })}
           className="text-xs border border-[var(--accent)] text-[var(--accent)] rounded-md px-2 py-1 flex items-center gap-1 whitespace-nowrap">
-          <Upload size={12} /> 入稿する
+          <CircleCheck size={12} /> 入稿した
         </button>
       </div>
     );
