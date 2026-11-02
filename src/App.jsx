@@ -230,7 +230,7 @@ export default function App({ boot }) {
             />
           )}
 
-          {view === "masters" && <Masters lineItems={lineItems} members={members} setMembers={setMembers} />}
+          {view === "masters" && <Masters lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
           {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (
