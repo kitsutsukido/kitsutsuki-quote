@@ -275,8 +275,11 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
       </button>
     );
 
+  // 入稿済み(まとめた行は全部入稿済み)の行・カードは薄い灰色にする
+  const isDone = (it) => listOf(it).every((x) => x.actualDate);
+  const doneCls = "opacity-55 bg-black/[0.04]";
   const mobileCard = (it, { names, qty, toggle, child = false } = {}) => (
-    <div key={it.__ids ? it.__ids.join(",") : it.id} className={`border border-[var(--border)] rounded-lg p-3 space-y-2 ${child ? "ml-4 bg-[var(--paper)]" : "bg-[var(--card)]"}`}>
+    <div key={it.__ids ? it.__ids.join(",") : it.id} className={`border border-[var(--border)] rounded-lg p-3 space-y-2 ${child ? "ml-4 bg-[var(--paper)]" : "bg-[var(--card)]"} ${isDone(it) ? doneCls : ""}`}>
       <div className="flex justify-between items-baseline gap-2">
         <span className="text-sm font-medium text-[var(--ink)]">{names ?? it.name}</span>
         <span className="text-xs text-[var(--text-muted)] font-mono shrink-0">{qty ?? it.qty}部</span>
@@ -291,7 +294,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
   );
 
   const tableRow = (it, { names, qty, toggle, child = false } = {}) => (
-    <tr key={it.__ids ? it.__ids.join(",") : it.id} className={`border-b border-[var(--border)] last:border-0 ${child ? "bg-[var(--paper)]" : ""}`}>
+    <tr key={it.__ids ? it.__ids.join(",") : it.id} className={`border-b border-[var(--border)] last:border-0 ${child ? "bg-[var(--paper)]" : ""} ${isDone(it) ? doneCls : ""}`}>
       <td className={`py-2 px-2 ${child ? "pl-6" : ""}`}>
         {child && <span className="text-[var(--text-muted)]">└ </span>}
         {names ?? it.name}
