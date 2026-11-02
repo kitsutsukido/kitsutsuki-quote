@@ -167,7 +167,7 @@ export default function App({ boot }) {
           />
         </div>
 
-        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-6xl">
+        <main className="flex-1 min-w-0 p-4 md:p-6 max-w-screen-2xl">
           {view === "dashboard" && (
             <Dashboard
               products={products}
