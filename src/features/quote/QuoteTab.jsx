@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, X, Pencil, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, X, Pencil, ChevronUp, ChevronDown, Check } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
@@ -75,6 +75,7 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
           actualDate: "",
           deliveryDate: "",
           plannedDate: "",
+          unreviewed: true, // コピーしたまま、まだ見直していない(編集して保存するか「OK」で消える)
         }));
       setLineItems((prev) => [...prev, ...copies]);
     }
@@ -135,12 +136,19 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
     });
   };
 
+  // コピーしたまま見直していない明細(unreviewed)は色を付ける。編集して保存するか「OK」で消える
+  const unreviewedCount = items.filter((it) => it.unreviewed).length;
+  const markReviewed = (ids) => setLineItems((prev) => prev.map((x) => (ids.includes(x.id) ? { ...x, unreviewed: false } : x)));
+
   const row = (it, index, siblings) => (
     <div
       key={it.id}
-      className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[20%_1fr_7rem_4rem_5rem_6rem_6rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0"
+      className={`${it.unreviewed ? "bg-[var(--warn-soft)] -mx-1 px-1 rounded " : ""}grid grid-cols-[1fr_auto_auto] md:grid-cols-[20%_1fr_7rem_4rem_5rem_6rem_6rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0`}
     >
-      <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">{it.name}</span>
+      <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">
+        {it.name}
+        {it.unreviewed && <span className="ml-1.5 text-[10px] text-[var(--warn)] whitespace-nowrap">前回のまま</span>}
+      </span>
       <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
         <SpecText item={it} />
         {it.submitTo && <span className="md:hidden"> ・{it.submitTo}</span>}
@@ -160,6 +168,11 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
         <button onClick={() => setEditingItem(it)} className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] underline underline-offset-2 whitespace-nowrap" title="編集">
           編集
         </button>
+        {it.unreviewed && (
+          <button onClick={() => markReviewed([it.id])} title="直さなくてよい(このままでOK)" className="align-middle ml-1 p-1 text-[var(--warn)] hover:text-[var(--success)]">
+            <Check size={15} />
+          </button>
+        )}
       </span>
     </div>
   );
@@ -266,6 +279,20 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
         </div>
       ) : (
         <>
+          {unreviewedCount > 0 && (
+            <div className="flex flex-wrap items-center gap-2 bg-[var(--warn-soft)] text-[var(--warn)] rounded-lg px-3 py-2 text-sm">
+              <span>
+                前回の見積もりからコピーしたまま、まだ見直していない明細が <span className="font-medium">{unreviewedCount}件</span> あります(色の付いた行)。
+                編集して保存するか、直さなくてよいものは ✓ を押すと色が消えます。
+              </span>
+              <button
+                onClick={() => window.confirm(`残りの${unreviewedCount}件を、すべて「見直し済み」にしますか？`) && markReviewed(items.filter((x) => x.unreviewed).map((x) => x.id))}
+                className="ml-auto text-xs px-2 py-1 border border-[var(--warn)] rounded-md whitespace-nowrap"
+              >
+                全部見直し済みにする
+              </button>
+            </div>
+          )}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
             {nested.map(function renderNode(node) {
               const { group, depth, directItems, children, count, subtotal } = node;
@@ -321,7 +348,7 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
               initial={editingItem}
               onCancel={() => setEditingItem(null)}
               onDelete={deleteItem}
-              onSave={(item) => { setLineItems((prev) => prev.map((li2) => (li2.id === item.id ? item : li2))); setEditingItem(null); }}
+              onSave={(item) => { setLineItems((prev) => prev.map((li2) => (li2.id === item.id ? { ...item, unreviewed: false } : li2))); setEditingItem(null); }}
             /></Modal>
           )}
 

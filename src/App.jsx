@@ -159,6 +159,7 @@ export default function App({ boot }) {
           actualDate: "",
           deliveryDate: "",
           plannedDate: "",
+          unreviewed: true, // コピーしたまま、まだ見直していない(編集して保存するか「OK」で消える)
         }));
       setLineItems((prev) => [...prev, ...copies]);
     }
