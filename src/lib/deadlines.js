@@ -1,5 +1,11 @@
 import { isMaterial, isAssembly } from "./spec.js";
 
+// 今日の日付(この端末の時刻=日本時間で YYYY-MM-DD)。toISOString() はUTCなので、朝9時前は前日になってしまう
+export function localToday(now = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
 // 日付(YYYY-MM-DD)から n 日さかのぼる。business なら土日を数えない(祝日は考えない)。
 export function subtractDays(dateStr, n, mode) {
   if (!dateStr) return "";
