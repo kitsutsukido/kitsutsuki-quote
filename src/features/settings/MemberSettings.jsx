@@ -1,27 +1,45 @@
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { useRef } from "react";
+import { Upload } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { getInventoryMembers } from "../../lib/remote.js";
 
 // ---------- メンバーマスタ(入稿・購入の担当者とSlackリマインダーの宛先) ----------
-// 在庫管理アプリのメンバー(名前・SlackユーザーIDだけ)を取り込む。住所・電話などは読まない。
+// 在庫管理アプリのCSVからメンバー(名前・SlackユーザーIDだけ)を取り込む。住所・電話などは読まない。
 export function MemberSettings({ members, setMembers }) {
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const fileRef = useRef(null);
 
-  const importMembers = async () => {
-    setBusy(true);
+  // 在庫管理アプリの「メンバー・外注先マスタ」のCSV(CSV出力)から、サークルメンバー(種別「社員」)の
+  // 名前とSlackユーザーIDだけを取り込む。住所・電話・メールなどの列は読まない。
+  const importCsv = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
     setMessage("");
     try {
-      const { members: src, found } = await getInventoryMembers();
-      if (!found) {
-        setMessage("在庫管理アプリのメンバーを読めませんでした。");
+      const rows = parseCsv(await file.text());
+      const head = rows[0] || [];
+      const iName = head.indexOf("名前");
+      const iType = head.indexOf("種別");
+      const iSlack = head.indexOf("SlackユーザーID");
+      if (iName < 0 || iType < 0) {
+        setMessage("在庫管理アプリのメンバー・外注先マスタのCSVではありません(「名前」「種別」の列が見つかりません)。");
+        return;
+      }
+      const src = rows
+        .slice(1)
+        .filter((r) => (r[iType] || "").trim() === "社員" && (r[iName] || "").trim())
+        .map((r) => ({ name: r[iName].trim(), slackUserId: iSlack >= 0 ? (r[iSlack] || "").trim() : "" }));
+      if (src.length === 0) {
+        setMessage("取り込めるメンバー(種別「社員」)がありませんでした。");
         return;
       }
       let added = 0;
       let updated = 0;
       setMembers((prev) => {
         const next = [...prev];
+        added = 0;
+        updated = 0;
         for (const s of src) {
           const i = next.findIndex((m) => m.name === s.name);
           if (i < 0) {
@@ -34,11 +52,9 @@ export function MemberSettings({ members, setMembers }) {
         }
         return next;
       });
-      setMessage(`取り込みました(${src.length}人を確認)。新しく追加・更新された人は一覧を見てください。`);
-    } catch (e) {
-      setMessage(e.message === "unauthorized" ? "ログインの有効期限が切れました。再読み込みしてください。" : e.message);
-    } finally {
-      setBusy(false);
+      setMessage(`取り込みました(メンバー${src.length}人。すでにいる人はSlackユーザーIDだけ更新します)。`);
+    } catch (err) {
+      setMessage("ファイルを読み込めませんでした。");
     }
   };
   const patch = (id, fields) => setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...fields } : m)));
@@ -52,9 +68,11 @@ export function MemberSettings({ members, setMembers }) {
       <p className="text-xs text-[var(--text-muted)]">
         入稿・購入の担当者として選べます。SlackユーザーID(例: U0123ABCD)を入れておくと、入稿期限の当日にSlackでその人にメンションが飛びます。
       </p>
-      <button onClick={importMembers} disabled={busy} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1 disabled:opacity-50">
-        <Download size={14} /> 在庫管理アプリから取り込む
+      <button onClick={() => fileRef.current?.click()} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">
+        <Upload size={14} /> 在庫管理アプリのCSVから取り込む
       </button>
+      <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={importCsv} />
+      <p className="text-xs text-[var(--text-muted)]">在庫管理アプリの「マスタ管理 → メンバー・外注先マスタ」の「CSV出力」で出したファイルを選びます。</p>
       {message && <p className="text-xs text-[var(--text)]">{message}</p>}
       {members.length === 0 ? (
         <span className="text-xs text-[var(--text-muted)]">まだ登録がありません。</span>
@@ -86,4 +104,31 @@ export function MemberSettings({ members, setMembers }) {
       )}
     </div>
   );
+}
+
+// 引用符つきの項目・改行を含む項目に対応した、最小限のCSV読み込み(先頭のBOMは無視)
+function parseCsv(text) {
+  const src = text.replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (quoted) {
+      if (c === '"' && src[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else cell += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && src[i + 1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some((x) => x !== "")) rows.push(row);
+      row = [];
+    } else cell += c;
+  }
+  row.push(cell);
+  if (row.some((x) => x !== "")) rows.push(row);
+  return rows;
 }

@@ -17,7 +17,6 @@ import { runReminder } from "./reminder.js";
 //   GET    /api/me            -> ログイン中なら { email, name }、そうでなければ401
 //   GET    /api/kv/:key       -> KVの値(要ログイン)
 //   PUT    /api/kv/:key       -> KVへ保存(要ログイン)
-//   GET    /api/inventory-members -> 在庫管理アプリのメンバー(名前・SlackユーザーIDだけ、読み取り専用、要ログイン)
 //   (毎朝9時 日本時間) scheduled -> 入稿期限の当日リマインダーをSlackへ(reminder.js)
 //
 // KVは在庫管理アプリと同じnamespaceを共有するため、このWorkerが触れるキーは
@@ -112,23 +111,6 @@ async function handleKv(request, env, key) {
   return new Response("Method Not Allowed", { status: 405 });
 }
 
-// 在庫管理アプリのメンバー(種別「社員」=サークルメンバー)の名前とSlackユーザーIDだけを返す。
-// 住所・電話・メールなどは返さない。在庫アプリのデータは読むだけで、書き換えない。
-async function handleInventoryMembers(env) {
-  const raw = await env.QUOTE_KV.get("zk-inv:masters");
-  if (!raw) return json({ members: [], found: false });
-  let masters;
-  try {
-    masters = JSON.parse(raw);
-  } catch (e) {
-    return json({ members: [], found: false });
-  }
-  const members = (Array.isArray(masters.recipients) ? masters.recipients : [])
-    .filter((r) => r && r.type === "社員" && r.name)
-    .map((r) => ({ name: String(r.name), slackUserId: String(r.slackUserId || "") }));
-  return json({ members, found: true });
-}
-
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runReminder(env).catch((e) => console.error("[reminder] failed:", e && e.stack ? e.stack : e)));
@@ -143,14 +125,13 @@ export default {
       }
       if (pathname === "/api/session") return await handleSession(request, env);
 
-      if (pathname === "/api/me" || pathname === "/api/inventory-members" || pathname.startsWith("/api/kv/")) {
+      if (pathname === "/api/me" || pathname.startsWith("/api/kv/")) {
         const auth = await authenticate(request, env);
         if (!auth.ok) {
           console.log(`[auth] ${request.method} ${pathname} -> 401 (${auth.reason})`);
           return new Response("Unauthorized", { status: 401 });
         }
         if (pathname === "/api/me") return json({ email: auth.email, name: auth.name });
-        if (pathname === "/api/inventory-members") return await handleInventoryMembers(env);
         let key;
         try {
           key = decodeURIComponent(pathname.slice("/api/kv/".length));
