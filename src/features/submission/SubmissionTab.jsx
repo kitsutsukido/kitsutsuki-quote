@@ -224,12 +224,14 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
 
   // ---- 印刷会社(印刷・購入場所・依頼先)ごとに分け、その中で同じ仕様の明細を1行にまとめる ----
   const MERGE_FIELDS = ["submitOwner", "buyOwner", "purchaseStatus", "printDays", "actualDate", "deliveryDate"];
+  // 見た目が同じなら同じとみなす:全角・半角(かっこ・英数字・スペース)をそろえ、空白の連続を1つにする
+  const norm = (v) => String(v || "").normalize("NFKC").replace(/\s+/g, " ").trim();
   const sections = [];
   for (const it of items) {
-    const vendor = (it.submitTo || "").trim();
+    const vendor = norm(it.submitTo);
     let sec = sections.find((x) => x.vendor === vendor);
     if (!sec) sections.push((sec = { vendor, groups: [] }));
-    const key = `${vendor}|${it.kind || "print"}|${specString(it)}`;
+    const key = `${vendor}|${it.kind || "print"}|${norm(specString(it))}`;
     let g = sec.groups.find((x) => x.key === key);
     if (!g) sec.groups.push((g = { key, items: [] }));
     g.items.push(it);
