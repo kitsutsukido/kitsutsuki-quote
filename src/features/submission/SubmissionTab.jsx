@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { SpecText } from "../../components/common/SpecText.jsx";
 import { Upload, Undo2 } from "lucide-react";
 import { isMaterial, isAssembly } from "../../lib/spec.js";
@@ -31,6 +32,52 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
   }).length;
 
   const update = (id, fields) => setLineItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...fields } : it)));
+
+  // 担当の一括設定。選んだ担当を、このロットの確定見積もりの明細すべてに入れる
+  // (入稿担当は印刷の無い資材には入れない)。空のままの欄は変えない。
+  // 一部だけ違う担当にしたいときは、反映したあとで各明細の欄を直す。
+  const [bulkSubmit, setBulkSubmit] = useState("");
+  const [bulkBuy, setBulkBuy] = useState("");
+  const [bulkMsg, setBulkMsg] = useState("");
+  const nameOf = (id) => members.find((m) => m.id === id)?.name || "";
+  const applyBulkOwners = () => {
+    if (!bulkSubmit && !bulkBuy) return setBulkMsg("担当を選んでください。");
+    const submitTargets = bulkSubmit ? items.filter((it) => !isMaterial(it)) : [];
+    const buyTargets = bulkBuy ? items : [];
+    const changeSubmit = submitTargets.filter((it) => it.submitOwner !== bulkSubmit);
+    const changeBuy = buyTargets.filter((it) => it.buyOwner !== bulkBuy);
+    if (changeSubmit.length === 0 && changeBuy.length === 0) return setBulkMsg("変更はありませんでした(すでに同じ担当です)。");
+    const overwrite =
+      changeSubmit.filter((it) => it.submitOwner && members.some((m) => m.id === it.submitOwner)).length +
+      changeBuy.filter((it) => it.buyOwner && members.some((m) => m.id === it.buyOwner)).length;
+    const lines = [];
+    if (bulkSubmit) lines.push(`入稿担当: ${nameOf(bulkSubmit)}(${changeSubmit.length}件)`);
+    if (bulkBuy) lines.push(`購入担当: ${nameOf(bulkBuy)}(${changeBuy.length}件)`);
+    if (overwrite > 0) lines.push(`※すでに別の担当が入っている欄も${overwrite}件、上書きされます。`);
+    if (!window.confirm(`このロットの明細に、次の担当を入れます。\n${lines.join("\n")}\nよろしいですか？`)) return;
+    const sIds = new Set(changeSubmit.map((it) => it.id));
+    const bIds = new Set(changeBuy.map((it) => it.id));
+    setLineItems((prev) =>
+      prev.map((it) => {
+        if (!sIds.has(it.id) && !bIds.has(it.id)) return it;
+        const next = { ...it };
+        if (sIds.has(it.id)) next.submitOwner = bulkSubmit;
+        if (bIds.has(it.id)) next.buyOwner = bulkBuy;
+        return next;
+      })
+    );
+    setBulkMsg(`反映しました(${lines.filter((l) => !l.startsWith("※")).join("、")})。一部だけ違う担当は、下の各明細で直せます。`);
+  };
+  const bulkSelect = (value, onChange) => (
+    <select
+      className="border border-[var(--border)] rounded-md px-1.5 py-1 text-sm text-[var(--text)] bg-[var(--card)]"
+      value={value}
+      onChange={(e) => { onChange(e.target.value); setBulkMsg(""); }}
+    >
+      <option value="">変えない</option>
+      {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+    </select>
+  );
 
   const purchaseSelect = (it) => (
     <select
@@ -148,9 +195,25 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
           <input type="date" className={`${inputCls} !w-44`} value={project.productDue || ""} onChange={(e) => onUpdateProject({ productDue: e.target.value })} />
         </label>
         <p className="text-xs text-[var(--text-muted)] flex-1 min-w-[16rem]">
-          各明細の日数を入れると、納品日から逆算した入稿期限が出ます(内職市場の明細は商品納品日、それ以外は資材納品日から。資材納品日が空なら、全部商品納品日から)。数え方は、マスタの会社ごとの「納期の数え方」です(祝日は考えません)。
+          各明細の日数を入れると、納品日から逆算した入稿・購入期限が出ます(内職市場の明細は商品納品日、それ以外は資材納品日から。資材納品日が空なら、全部商品納品日から)。数え方は、マスタの会社ごとの「納期の数え方」です(祝日は考えません)。
         </p>
       </div>
+      {items.length > 0 && members.length > 0 && (
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-3 space-y-2">
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="text-sm font-medium text-[var(--ink)]">担当をまとめて設定</span>
+            <label className="flex items-center gap-1 text-xs text-[var(--text-muted)] whitespace-nowrap">入稿担当 {bulkSelect(bulkSubmit, setBulkSubmit)}</label>
+            <label className="flex items-center gap-1 text-xs text-[var(--text-muted)] whitespace-nowrap">購入担当 {bulkSelect(bulkBuy, setBulkBuy)}</label>
+            <button onClick={applyBulkOwners} className="text-xs border border-[var(--accent)] text-[var(--accent)] rounded-md px-3 py-1 whitespace-nowrap">
+              全部の明細に反映
+            </button>
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">
+            このロットの明細すべてに入ります(入稿担当は資材以外)。一部だけ違う担当にしたいときは、反映したあとで下の各明細の欄を直してください。
+          </p>
+          {bulkMsg && <p className="text-xs text-[var(--text)]">{bulkMsg}</p>}
+        </div>
+      )}
       <div className="grid grid-cols-3 sm:flex gap-2 sm:gap-3">
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 sm:px-4 py-2.5">
           <p className="text-xs text-[var(--text-muted)]">未入稿</p>
@@ -197,7 +260,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
               <th className="py-2 px-3 font-normal text-right whitespace-nowrap">部数</th>
               <th className="py-2 px-3 font-normal whitespace-nowrap">担当</th>
               <th className="py-2 px-3 font-normal whitespace-nowrap">日数</th>
-              <th className="py-2 px-3 font-normal whitespace-nowrap">入稿期限</th>
+              <th className="py-2 px-3 font-normal whitespace-nowrap">入稿・購入期限</th>
               <th className="py-2 px-3 font-normal">購入</th>
               <th className="py-2 px-3 font-normal whitespace-nowrap">入稿状況</th>
             </tr>

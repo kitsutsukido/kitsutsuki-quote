@@ -66,7 +66,7 @@ export function MemberSettings({ members, setMembers }) {
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
       <p className="text-sm font-medium text-[var(--ink)]">メンバー</p>
       <p className="text-xs text-[var(--text-muted)]">
-        入稿・購入の担当者として選べます。SlackユーザーID(例: U0123ABCD)を入れておくと、入稿期限の当日にSlackでその人にメンションが飛びます。
+        入稿・購入の担当者として選べます。SlackユーザーID(例: U0123ABCD)を入れておくと、入稿・購入期限の当日にSlackでその人にメンションが飛びます。
       </p>
       <div className="flex flex-wrap gap-2">
       <button onClick={sync} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md flex items-center gap-1">

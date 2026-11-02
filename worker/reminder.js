@@ -38,7 +38,7 @@ export function buildReminderText({ data, vendors, today }) {
     if (!byProject.has(key)) byProject.set(key, { project: l.project, rows: [] });
     byProject.get(key).rows.push(l.text);
   }
-  const parts = [`:alarm_clock: 今日(${today})が入稿期限の明細です`];
+  const parts = [`:alarm_clock: 今日(${today})が入稿・購入期限の明細です`];
   for (const { project, rows } of byProject.values()) parts.push(`*${project.round}*`, ...rows);
   return parts.join("\n");
 }
