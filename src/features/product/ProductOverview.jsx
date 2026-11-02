@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven } from "../../lib/breakeven.js";
+import { feesOf } from "../../lib/profitFees.js";
 import { GroupManager } from "./GroupManager.jsx";
 
 // この商品の各案件のうち、確定見積もりを持つものの中から最新のものを探す
@@ -45,7 +46,8 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
     const s = settings[latest.project.id];
     const pattern = patterns.find((p) => p.projectId === latest.project.id);
     if (s && pattern) {
-      const [row] = computeBreakeven(costTotal, latest.project.qty, s, pattern, [latest.project.qty]);
+      const projectPatterns = patterns.filter((p) => p.projectId === latest.project.id);
+      const [row] = computeBreakeven(costTotal, latest.project.qty, s, pattern, [latest.project.qty], feesOf(s, projectPatterns));
       margin = row.margin;
     }
   }
