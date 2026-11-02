@@ -56,12 +56,20 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
     const base = p.use ? p : materializePattern(p, fees);
     updatePattern(p.id, { use: { ...base.use, [feeId]: on } });
   };
+  // 上書きの値。入力中の空欄は "" のまま持ち(計算は収支設定の値)、欄を離れたときに
+  // 空欄や収支設定と同じ値なら上書きをやめる(収支設定を変えたらパターンにも反映されるように)
   const setPatternOverride = (p, feeId, v) => {
     const base = p.use ? p : materializePattern(p, fees);
-    const overrides = { ...base.overrides };
-    if (v === "") delete overrides[feeId];
-    else overrides[feeId] = Number(v);
-    updatePattern(p.id, { overrides });
+    updatePattern(p.id, { overrides: { ...base.overrides, [feeId]: v === "" ? "" : Number(v) } });
+  };
+  const tidyPatternOverride = (p, f) => {
+    const raw = p.overrides?.[f.id];
+    if (raw === undefined) return;
+    if (raw === "" || Number(raw) === Number(f.value)) {
+      const overrides = { ...p.overrides };
+      delete overrides[f.id];
+      updatePattern(p.id, { overrides });
+    }
   };
   // 販売パターンの並べ替え(つまみをドラッグ)。全ロットのパターンが1つの配列なので、このロットの分だけ並びを入れ替える
   const patternSort = useDragSort((from, to) => {
@@ -144,9 +152,14 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
                       </label>
                       {on && (
                         <>
-                          <input type="number" className={`${inputCls} !w-24`} value={override ?? ""} placeholder={String(f.value)}
-                            onChange={(e) => setPatternOverride(p, f.id, e.target.value)} />
-                          <span className="text-xs text-[var(--text-muted)]">{unit(f)}(空欄=収支設定の{f.value}{unit(f)})</span>
+                          {/* 最初から収支設定の値を表示。直した値はこのパターンだけに使う */}
+                          <input type="number" className={`${inputCls} !w-24`}
+                            value={p.use && p.overrides?.[f.id] !== undefined ? p.overrides[f.id] : override ?? f.value}
+                            onChange={(e) => setPatternOverride(p, f.id, e.target.value)}
+                            onBlur={() => tidyPatternOverride(p, f)} />
+                          <span className="text-xs text-[var(--text-muted)]">
+                            {unit(f)}{override !== null && override !== Number(f.value) ? `(収支設定は${f.value}${unit(f)})` : ""}
+                          </span>
                         </>
                       )}
                     </div>
