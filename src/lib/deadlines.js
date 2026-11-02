@@ -1,4 +1,4 @@
-import { isMaterial } from "./spec.js";
+import { isMaterial, isAssembly } from "./spec.js";
 
 // 日付(YYYY-MM-DD)から n 日さかのぼる。business なら土日を数えない(祝日は考えない)。
 export function subtractDays(dateStr, n, mode) {
@@ -34,7 +34,8 @@ export function addDays(dateStr, n, mode) {
 export function findVendor(vendors, item) {
   const name = (item.submitTo || "").trim();
   if (!name) return null;
-  return (vendors || []).find((x) => x.name === name && (isMaterial(item) ? x.kind === "material" : x.kind === "print" || x.kind === "assembly")) || null;
+  const ok = (k) => (isMaterial(item) ? k === "material" : isAssembly(item) ? k === "assembly" : k === "print" || k === "assembly");
+  return (vendors || []).find((x) => x.name === name && ok(x.kind)) || null;
 }
 
 // 入稿期限を、納品日から印刷日数を引いて出す。
@@ -47,7 +48,7 @@ export function submitDeadline(item, project, vendors) {
   const days = Number(item.printDays);
   if (!item.printDays || !Number.isFinite(days) || days <= 0) return { date: manual, calc: false };
   const vendor = findVendor(vendors, item);
-  const assembly = vendor?.kind === "assembly";
+  const assembly = vendor?.kind === "assembly" || isAssembly(item); // 内職・加工の明細は、依頼先がマスタに無くても商品納品日から
   const base = assembly ? project?.productDue : project?.materialDue || project?.productDue;
   if (!base) return { date: manual, calc: false };
   return { date: subtractDays(base, days, vendor?.days === "business" ? "business" : "calendar"), calc: true, base, assembly };

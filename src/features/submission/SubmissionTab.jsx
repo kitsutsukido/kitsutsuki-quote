@@ -1,6 +1,6 @@
 import { SpecText } from "../../components/common/SpecText.jsx";
 import { Upload, Undo2 } from "lucide-react";
-import { isMaterial } from "../../lib/spec.js";
+import { isMaterial, isAssembly } from "../../lib/spec.js";
 import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
 import { submitDeadline, findVendor, deliveryDateOf } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -65,7 +65,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
 
   const daysInput = (it) => (
     <label className="flex items-center gap-1 text-[var(--text-muted)] text-xs whitespace-nowrap">
-      {isMaterial(it) ? "納品日数" : "印刷日数"}
+      {isMaterial(it) ? "納品日数" : isAssembly(it) ? "作業日数" : "印刷日数"}
       <input
         type="number"
         min="0"
@@ -176,7 +176,7 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
             </div>
             <p className="text-xs text-[var(--text-muted)]"><SpecText item={it} /></p>
             <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span>{vendorNote(it)}</span>
+              <span className="text-[var(--text-muted)]">{isMaterial(it) ? "購入場所" : isAssembly(it) ? "依頼先" : "印刷場所"}: <span className="text-[var(--text)]">{it.submitTo || "―"}</span>{vendorNote(it)}</span>
               <label className="flex items-center gap-1.5 text-[var(--text-muted)]">購入 {purchaseSelect(it)}</label>
             </div>
             {owners(it)}
