@@ -8,11 +8,14 @@ const norm = (s) => String(s || "").normalize("NFKC").toLowerCase().replace(/\s+
 // ・入力した文字で候補を絞り込む(使った回数が多い順)
 // ・よく使う上位5社は、いつでもボタンで選べる
 // 登録にない会社名も、そのまま入力できる。
-export function VendorPicker({ value, onChange, placeholder, lineItems, material }) {
+export function VendorPicker({ value, onChange, placeholder, lineItems, kind = KIND_PRINT }) {
   const { vendors: all } = useVendors();
-  // 印刷物なら印刷会社と加工・組立の外注先、資材なら資材仕入先だけを候補にする
-  const kind = material ? KIND_MATERIAL : KIND_PRINT;
-  const vendors = useMemo(() => all.filter((v) => v.kind === kind || (!material && v.kind === KIND_ASSEMBLY)).map((v) => v.name), [all, kind]);
+  // 資材なら資材仕入先、内職・加工なら加工・組立の外注先だけ。
+  // 印刷物は印刷会社と加工・組立の外注先(「内職・加工」の種別ができる前に印刷物で登録した明細のため)
+  const vendors = useMemo(
+    () => all.filter((v) => v.kind === kind || (kind === KIND_PRINT && v.kind === KIND_ASSEMBLY)).map((v) => v.name),
+    [all, kind]
+  );
   const [open, setOpen] = useState(false);
 
   const ranked = useMemo(() => {

@@ -9,7 +9,7 @@ export function VendorSettings({ lineItems }) {
     <div className="space-y-4">
       <VendorList kind={KIND_PRINT} lineItems={lineItems} placeholder="例: プリントパック" help="明細の「印刷場所」で候補になります。" />
       <VendorList kind={KIND_MATERIAL} lineItems={lineItems} placeholder="例: シモジマ" help="OPP袋・ダンボールなど資材の「購入場所」で候補になります。" />
-      <VendorList kind={KIND_ASSEMBLY} lineItems={lineItems} placeholder="例: 内職市場" help="内職・袋詰め・アッセンブリなどの手作業を頼む先です。印刷物の明細の「印刷場所」で候補になります。" />
+      <VendorList kind={KIND_ASSEMBLY} lineItems={lineItems} placeholder="例: 内職市場" help="内職・袋詰め・アッセンブリなどの手作業を頼む先です。内職・加工の明細の「依頼先」(と印刷物の「印刷場所」)で候補になります。" />
     </div>
   );
 }
@@ -31,10 +31,10 @@ function VendorList({ kind, lineItems, placeholder, help }) {
   const remove = (name) => setVendors((v) => v.filter((x) => !(x.kind === kind && x.name === name)));
 
   // 今まで同じ種別の明細に入れた会社名のうち、マスタにまだ無いもの
-  const itemKind = kind === KIND_MATERIAL ? "material" : "print";
+  const itemKind = kind === KIND_MATERIAL ? "material" : kind === KIND_ASSEMBLY ? "assembly" : "print";
   const names = new Set(vendors.map((v) => v.name)); // どの種別にも登録済みの会社は出さない
   const unused = [
-    ...new Set((lineItems || []).filter((it) => (it.kind === "material" ? "material" : "print") === itemKind).map((it) => (it.submitTo || "").trim()).filter(Boolean)),
+    ...new Set((lineItems || []).filter((it) => (it.kind === "material" || it.kind === "assembly" ? it.kind : "print") === itemKind).map((it) => (it.submitTo || "").trim()).filter(Boolean)),
   ].filter((n) => !names.has(n));
 
   return (

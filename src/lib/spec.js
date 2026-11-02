@@ -1,12 +1,16 @@
-// 明細の種別: 印刷物(既定) / 資材(OPP袋・ダンボールなど。印刷しないので色・紙・加工は持たない)
+// 明細の種別: 印刷物(既定) / 資材(OPP袋・ダンボールなど) / 内職・加工(アッセンブリ・袋詰めなどの手作業)
+// 資材と内職・加工は印刷しないので、色・紙・加工は持たない(仕様は「名称・作業内容」と備考だけ)
 export const KIND_PRINT = "print";
 export const KIND_MATERIAL = "material";
+export const KIND_ASSEMBLY = "assembly";
 
 export const isMaterial = (item) => item.kind === KIND_MATERIAL;
+export const isAssembly = (item) => item.kind === KIND_ASSEMBLY;
+export const isPrint = (item) => !isMaterial(item) && !isAssembly(item);
 
 // withProcesses=false: 加工を除いた仕様(加工は別行の箇条書きで出すとき用)
 export function specString(item, { withProcesses = true } = {}) {
-  if (isMaterial(item)) {
+  if (!isPrint(item)) {
     return [item.size, item.note].filter(Boolean).join("・");
   }
   // 色数は「指定なし」(空)のとき表示しない(クリアファイルなど面の区別がないもの用)

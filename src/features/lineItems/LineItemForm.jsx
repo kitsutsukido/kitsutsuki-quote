@@ -3,7 +3,7 @@ import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { Chip } from "../../components/common/Chip.jsx";
-import { specString, isMaterial, KIND_PRINT, KIND_MATERIAL } from "../../lib/spec.js";
+import { specString, isMaterial, isAssembly, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY } from "../../lib/spec.js";
 import { VendorPicker } from "./VendorPicker.jsx";
 import { createLineItem } from "../../data/seedData.js";
 import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../../lib/groupTree.js";
@@ -40,6 +40,8 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
   const bulkUnit = Number(form.bulkQty) > 0 && form.bulkAmount !== "" && form.bulkAmount != null ? Number(form.bulkAmount) / Number(form.bulkQty) : null;
 
   const material = isMaterial(form);
+  const assembly = isAssembly(form);
+  const printKind = !material && !assembly;
   const anySide = (form.colorFront || "").endsWith("*"); // 「面の指定なし」(クリアファイルなど)
   // 表面の色数を変える。「面の指定なし」を選ぶと裏面は選べなくなる(空)。戻したら裏面は片面(0c)に
   const setFront = (e) => {
@@ -202,8 +204,9 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       <div>
         <label className="text-xs text-[var(--text-muted)] block mb-1">種別</label>
         <div className="flex flex-wrap gap-2">
-          <Chip active={!material} onClick={() => setForm({ ...form, kind: KIND_PRINT })}>印刷物</Chip>
+          <Chip active={printKind} onClick={() => setForm({ ...form, kind: KIND_PRINT })}>印刷物</Chip>
           <Chip active={material} onClick={() => setForm({ ...form, kind: KIND_MATERIAL })}>資材(OPP袋・ダンボールなど)</Chip>
+          <Chip active={assembly} onClick={() => setForm({ ...form, kind: KIND_ASSEMBLY })}>内職・加工(アッセンブリ・袋詰めなど)</Chip>
         </div>
       </div>
 
@@ -215,7 +218,13 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
             <Field label="備考"><input className={inputCls} value={form.note || ""} onChange={set("note")} placeholder="例：本体テープ付き・100枚入×5パック" /></Field>
           </>
         )}
-        {!material && (
+        {assembly && (
+          <>
+            <Field label="作業内容"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="例：アッセンブリ(19点)・袋詰め" /></Field>
+            <Field label="備考"><input className={inputCls} value={form.note || ""} onChange={set("note")} placeholder="例：1セットあたりの単価・作業の注意" /></Field>
+          </>
+        )}
+        {printKind && (
         <>
         <div className="grid grid-cols-3 gap-3">
           <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
@@ -271,10 +280,10 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={setWithBulk("qty")} /></Field>
+        <Field label={printKind ? "部数" : "数量"}><input type="number" className={inputCls} value={form.qty} onChange={setWithBulk("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
-        <Field label={material ? "購入場所" : "印刷場所"}>
-          <VendorPicker value={form.submitTo} onChange={(v) => setForm((f) => ({ ...f, submitTo: v }))} placeholder={material ? "シモジマ" : "プリントパック"} lineItems={lineItems} material={material} />
+        <Field label={material ? "購入場所" : assembly ? "依頼先" : "印刷場所"}>
+          <VendorPicker value={form.submitTo} onChange={(v) => setForm((f) => ({ ...f, submitTo: v }))} placeholder={material ? "シモジマ" : assembly ? "内職市場" : "プリントパック"} lineItems={lineItems} kind={material ? KIND_MATERIAL : assembly ? KIND_ASSEMBLY : KIND_PRINT} />
         </Field>
       </div>
 
