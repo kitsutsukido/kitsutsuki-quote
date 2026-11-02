@@ -21,6 +21,24 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  // まとめ買い(例:OPP袋を2,500枚 ¥2,500で買い、この明細では500枚使う)から金額を出す。
+  // 買った数量・買った金額の両方が入っているときだけ、金額(合計) = 買った金額 ÷ 買った数量 × 数量(円未満四捨五入)。
+  const bulkAmountFor = (f) => {
+    const bq = Number(f.bulkQty);
+    const ba = Number(f.bulkAmount);
+    const q = Number(f.qty);
+    if (!(bq > 0) || !(ba >= 0) || f.bulkAmount === "" || f.bulkAmount == null) return null;
+    return Math.round((ba / bq) * (q || 0));
+  };
+  // 数量・買った数量・買った金額のどれかを変えたら、金額(合計)を計算し直す
+  const setWithBulk = (k) => (e) => {
+    const next = { ...form, [k]: e.target.value };
+    const amt = bulkAmountFor(next);
+    if (amt !== null) next.amount = amt;
+    setForm(next);
+  };
+  const bulkUnit = Number(form.bulkQty) > 0 && form.bulkAmount !== "" && form.bulkAmount != null ? Number(form.bulkAmount) / Number(form.bulkQty) : null;
+
   const material = isMaterial(form);
   const anySide = (form.colorFront || "").endsWith("*"); // 「面の指定なし」(クリアファイルなど)
   // 表面の色数を変える。「面の指定なし」を選ぶと裏面は選べなくなる(空)。戻したら裏面は片面(0c)に
@@ -253,12 +271,29 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={set("qty")} /></Field>
+        <Field label={material ? "数量" : "部数"}><input type="number" className={inputCls} value={form.qty} onChange={setWithBulk("qty")} /></Field>
         <Field label="金額(合計)"><input type="number" className={inputCls} value={form.amount} onChange={set("amount")} /></Field>
         <Field label={material ? "購入場所" : "印刷場所"}>
           <VendorPicker value={form.submitTo} onChange={(v) => setForm((f) => ({ ...f, submitTo: v }))} placeholder={material ? "シモジマ" : "プリントパック"} lineItems={lineItems} material={material} />
         </Field>
       </div>
+
+      {material && (
+        <div className="border border-[var(--border)] rounded-md p-3 space-y-2">
+          <p className="text-xs text-[var(--text)]">
+            まとめ買いのとき(任意):買った数量と金額を入れると、上の「数量」の分の金額を自動で出します(買った金額 ÷ 買った数量 × 数量、円未満は四捨五入)。
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="買った数量"><input type="number" className={inputCls} value={form.bulkQty ?? ""} onChange={setWithBulk("bulkQty")} placeholder="例：2500" /></Field>
+            <Field label="買った金額(合計)"><input type="number" className={inputCls} value={form.bulkAmount ?? ""} onChange={setWithBulk("bulkAmount")} placeholder="例：2500" /></Field>
+          </div>
+          {bulkUnit !== null && (
+            <p className="text-xs text-[var(--text-muted)]">
+              1つあたり ¥{bulkUnit.toLocaleString("ja-JP", { maximumFractionDigits: 2 })} × {Number(form.qty || 0).toLocaleString("ja-JP")} = ¥{(bulkAmountFor(form) ?? 0).toLocaleString("ja-JP")}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-between items-center pt-2">
         <div>
@@ -274,7 +309,18 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         <div className="flex gap-2">
           <button onClick={onCancel} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">キャンセル</button>
           <button
-            onClick={() => onSave({ ...form, qty: Number(form.qty), amount: Number(form.amount) })}
+            onClick={() => {
+              const out = { ...form, qty: Number(form.qty), amount: Number(form.amount) };
+              // まとめ買いの欄は、両方入っているときだけ数値で残す(片方だけ・空なら消す)
+              if (Number(form.bulkQty) > 0 && form.bulkAmount !== "" && form.bulkAmount != null) {
+                out.bulkQty = Number(form.bulkQty);
+                out.bulkAmount = Number(form.bulkAmount);
+              } else {
+                delete out.bulkQty;
+                delete out.bulkAmount;
+              }
+              onSave(out);
+            }}
             className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md"
           >
             {isEdit ? "保存" : "追加"}
