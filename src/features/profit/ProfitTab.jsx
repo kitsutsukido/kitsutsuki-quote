@@ -4,7 +4,7 @@ import { useDragSort, arrayMove } from "../../lib/useDragSort.js";
 import { Chip } from "../../components/common/Chip.jsx";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { computeBreakeven } from "../../lib/breakeven.js";
+import { computeBreakeven, breakevenQty } from "../../lib/breakeven.js";
 import { feesOf, patternFee, materializePattern, withLegacyFields } from "../../lib/profitFees.js";
 
 // ---------- 収支設定・損益分岐点タブ ----------
@@ -93,8 +93,12 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
   };
   const unit = (f) => (f.kind === "yen" ? "円/部" : "%");
 
-  const volumes = [200, 400, 600, 800, 1000, 1200];
+  // 100部きざみで、刷った部数(または1,200部)まで
+  const maxVol = Math.max(1200, Math.ceil((project.qty || 0) / 100) * 100);
+  const volumes = Array.from({ length: maxVol / 100 }, (_, i) => (i + 1) * 100);
   const rows = activePattern ? computeBreakeven(costTotal, project.qty, s, activePattern, volumes, fees) : [];
+  const beQty = activePattern ? breakevenQty(costTotal, s, activePattern, fees) : null;
+  const firstPlus = rows.find((r) => r.profit >= 0)?.vol;
 
   return (
     <div className="space-y-4">
@@ -180,6 +184,13 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
             ))}
           </div>
         </div>
+        <p className="text-sm mb-2">
+          {beQty === null ? (
+            <span className="text-[var(--danger)]">1部売るごとに赤字が増えます(手数料・分配が販売価格以上)。</span>
+          ) : (
+            <>損益分岐点:<span className="font-mono font-medium">{beQty.toLocaleString()}部</span> 以上売れると黒字<span className="text-xs text-[var(--text-muted)]">(経費 {costTotal.toLocaleString()}円は何部売れても同じとして計算)</span></>
+          )}
+        </p>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left">
@@ -192,8 +203,11 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.vol} className="border-b border-[var(--border)] last:border-0">
-                <td className="py-1.5 font-mono">{r.vol}部</td>
+              <tr key={r.vol} className={`border-b border-[var(--border)] last:border-0 ${r.vol === firstPlus ? "bg-[var(--success-soft)] font-medium" : ""}`}>
+                <td className="py-1.5 font-mono">
+                  {r.vol}部
+                  {r.vol === firstPlus && <span className="ml-2 font-sans text-xs text-[var(--success)]">ここから黒字</span>}
+                </td>
                 <td className="py-1.5 text-right font-mono">{Math.round(r.revenue).toLocaleString()}円</td>
                 <td className="py-1.5 text-right font-mono">{Math.round(r.fees).toLocaleString()}円</td>
                 <td className={`py-1.5 text-right font-mono ${r.profit < 0 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{Math.round(r.profit).toLocaleString()}円</td>
