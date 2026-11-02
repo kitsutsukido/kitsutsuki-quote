@@ -17,6 +17,7 @@ import { runReminder } from "./reminder.js";
 //   GET    /api/me            -> ログイン中なら { email, name }、そうでなければ401
 //   GET    /api/kv/:key       -> KVの値(要ログイン)
 //   PUT    /api/kv/:key       -> KVへ保存(要ログイン)
+//   GET    /api/inventory-members -> 在庫管理アプリのメンバー(名前・SlackユーザーIDだけ。要ログイン。在庫アプリの専用APIを合言葉つきで呼ぶ)
 //   (毎朝9時 日本時間) scheduled -> 入稿期限の当日リマインダーをSlackへ(reminder.js)
 //
 // KVは在庫管理アプリと同じnamespaceを共有するため、このWorkerが触れるキーは
@@ -111,6 +112,31 @@ async function handleKv(request, env, key) {
   return new Response("Method Not Allowed", { status: 405 });
 }
 
+// 在庫管理アプリの専用API(GET /api/quote-members)から、サークルメンバーの名前とSlackユーザーIDだけを取る。
+// 合言葉(シークレット INVENTORY_SERVICE_TOKEN)は、在庫アプリの SERVICE_TOKEN_QUOTE と同じ値。
+// 失敗しても画面を止めないよう、理由つきで { members: [], found: false, reason } を返す。
+const INVENTORY_BASE_URL = "https://kitsutsuki-inventory.pages.dev";
+async function handleInventoryMembers(env) {
+  if (!env.INVENTORY_SERVICE_TOKEN) return json({ members: [], found: false, reason: "not-configured" });
+  try {
+    const res = await fetch(`${env.INVENTORY_BASE_URL || INVENTORY_BASE_URL}/api/quote-members`, {
+      headers: { "X-Zk-Inv-Service-Token": env.INVENTORY_SERVICE_TOKEN },
+    });
+    if (!res.ok) {
+      console.warn(`[inventory-members] inventory responded ${res.status}`);
+      return json({ members: [], found: false, reason: `inventory-${res.status}` });
+    }
+    const body = await res.json();
+    const members = (Array.isArray(body.members) ? body.members : [])
+      .filter((m) => m && m.name)
+      .map((m) => ({ name: String(m.name), slackUserId: String(m.slackUserId || "") }));
+    return json({ members, found: body.found !== false });
+  } catch (e) {
+    console.error("[inventory-members] failed:", e && e.stack ? e.stack : e);
+    return json({ members: [], found: false, reason: "fetch-failed" });
+  }
+}
+
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runReminder(env).catch((e) => console.error("[reminder] failed:", e && e.stack ? e.stack : e)));
@@ -125,13 +151,14 @@ export default {
       }
       if (pathname === "/api/session") return await handleSession(request, env);
 
-      if (pathname === "/api/me" || pathname.startsWith("/api/kv/")) {
+      if (pathname === "/api/me" || pathname === "/api/inventory-members" || pathname.startsWith("/api/kv/")) {
         const auth = await authenticate(request, env);
         if (!auth.ok) {
           console.log(`[auth] ${request.method} ${pathname} -> 401 (${auth.reason})`);
           return new Response("Unauthorized", { status: 401 });
         }
         if (pathname === "/api/me") return json({ email: auth.email, name: auth.name });
+        if (pathname === "/api/inventory-members") return await handleInventoryMembers(env);
         let key;
         try {
           key = decodeURIComponent(pathname.slice("/api/kv/".length));

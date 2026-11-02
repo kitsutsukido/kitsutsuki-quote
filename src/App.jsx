@@ -19,6 +19,8 @@ import {
 } from "./lib/storage.js";
 import { useSharedData } from "./lib/dataSync.js";
 import { NewProductModal } from "./components/NewProductModal.jsx";
+import { getInventoryMembers } from "./lib/remote.js";
+import { mergeImportedMembers } from "./lib/members.js";
 import { Header } from "./features/header/Header.jsx";
 import { Sidebar } from "./features/sidebar/Sidebar.jsx";
 import { Dashboard } from "./features/dashboard/Dashboard.jsx";
@@ -79,6 +81,20 @@ export default function App({ boot }) {
       if (d.profitPatterns) setPatterns(d.profitPatterns);
     },
   });
+
+  // 開いたときに、在庫管理アプリのメンバーを自動で同期する(失敗しても何も出さない。マスタの画面で理由が見られる)
+  useEffect(() => {
+    if (!serverMode) return;
+    let cancelled = false;
+    getInventoryMembers()
+      .then((r) => {
+        if (!cancelled && r.found && r.members.length) setMembers((prev) => mergeImportedMembers(prev, r.members));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [serverMode]);
 
   const project = projects.find((p) => p.id === selectedId) || projects[0];
   const product = products.find((p) => p.id === project.productId);
