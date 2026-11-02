@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
-import { computeBreakeven } from "../../lib/breakeven.js";
+import { computeBreakeven, breakevenQty } from "../../lib/breakeven.js";
 import { feesOf } from "../../lib/profitFees.js";
 import { GroupManager } from "./GroupManager.jsx";
 
@@ -36,7 +36,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
   const latest = findLatestConfirmedLot(product, projects, sessions);
 
   let unitPrice = null;
-  let margin = null;
+  let margins = []; // 販売パターンごとの { name, margin, be }(刷った部数が全部売れたとき)
   if (latest) {
     const costTotal = lineItems
       .filter((it) => it.sessionId === latest.session.id)
@@ -44,11 +44,13 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
     unitPrice = latest.project.qty ? costTotal / latest.project.qty : null;
 
     const s = settings[latest.project.id];
-    const pattern = patterns.find((p) => p.projectId === latest.project.id);
-    if (s && pattern) {
-      const projectPatterns = patterns.filter((p) => p.projectId === latest.project.id);
-      const [row] = computeBreakeven(costTotal, latest.project.qty, s, pattern, [latest.project.qty], feesOf(s, projectPatterns));
-      margin = row.margin;
+    const projectPatterns = patterns.filter((p) => p.projectId === latest.project.id);
+    if (s && projectPatterns.length) {
+      const fees = feesOf(s, projectPatterns);
+      margins = projectPatterns.map((pattern) => {
+        const [row] = computeBreakeven(costTotal, latest.project.qty, s, pattern, [latest.project.qty], fees);
+        return { id: pattern.id, name: pattern.name, margin: row.margin, be: breakevenQty(costTotal, s, pattern, fees) };
+      });
     }
   }
 
@@ -72,10 +74,25 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
           </p>
         </div>
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
-          <p className="text-xs text-[var(--text-muted)] mb-1">利益率</p>
-          <p className="text-xl font-medium font-mono text-[var(--ink)]">
-            {margin != null ? `${(margin * 100).toFixed(1)}%` : "―"}
+          <p className="text-xs text-[var(--text-muted)] mb-1">
+            利益率(販売パターンごと)
+            {latest && <span className="block">{latest.project.round}・{latest.project.qty}部が全部売れたとき</span>}
           </p>
+          {margins.length === 0 ? (
+            <p className="text-xl font-medium font-mono text-[var(--ink)]">―</p>
+          ) : (
+            <ul className="space-y-1">
+              {margins.map((m) => (
+                <li key={m.id} className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="text-[var(--text)] truncate">{m.name}</span>
+                  <span className="shrink-0 text-right">
+                    <span className={`font-mono font-medium ${m.margin < 0 ? "text-[var(--danger)]" : "text-[var(--ink)]"}`}>{(m.margin * 100).toFixed(1)}%</span>
+                    {m.be != null && <span className="block text-[10px] text-[var(--text-muted)]">{m.be.toLocaleString()}部で黒字</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
