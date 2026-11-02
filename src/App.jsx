@@ -196,6 +196,7 @@ export default function App({ boot }) {
         <div className={`${menuOpen ? "fixed inset-y-0 left-0 z-40 overflow-y-auto" : "hidden"} md:block md:static md:z-auto md:overflow-visible shrink-0`}>
           <Sidebar
             products={products}
+            setProducts={setProducts}
             projects={projects}
             selectedId={selectedId}
             selectedProductId={selectedProductId}

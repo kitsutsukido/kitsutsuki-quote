@@ -1,8 +1,15 @@
 import { useState } from "react";
-import { Plus, ChevronRight, ChevronDown, Database } from "lucide-react";
+import { Plus, ChevronRight, ChevronDown, Database, GripVertical } from "lucide-react";
+import { useDragSort, arrayMove } from "../../lib/useDragSort.js";
+
+// シリーズの中の商品を、つまみ(⋮⋮)のドラッグで並べ替える(フックをシリーズごとに使うため部品に分けている)
+function SortableList({ items, onMove, children }) {
+  const sort = useDragSort(onMove);
+  return items.map((item, i) => children(item, i, sort));
+}
 
 // ---------- サイドバー(ダッシュボード・マスタ、ジャンル > 商品 > 案件の3階層、新規商品の作成) ----------
-export function Sidebar({ products, projects, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onCreateNew }) {
+export function Sidebar({ products, setProducts, projects, selectedId, selectedProductId, view, setView, setSelectedId, onOpenProduct, onCreateNew }) {
   const genres = [];
   for (const prod of products) {
     if (!genres.includes(prod.genre)) genres.push(prod.genre);
@@ -69,11 +76,34 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
                 </button>
                 {isGenreOpen && (
                   <div className="ml-2 border-l border-[var(--border)] pl-2">
-                    {genreProducts.map((prod) => {
+                    <SortableList
+                      items={genreProducts}
+                      onMove={(from, to) => {
+                        const moved = arrayMove(genreProducts, from, to);
+                        let k = 0;
+                        setProducts?.((prev) => prev.map((x) => (x.genre === genre ? moved[k++] : x)));
+                      }}
+                    >
+                    {(prod, i, sort) => {
                       const productProjects = projects.filter((p) => p.productId === prod.id);
                       const isProductOpen = openProducts.has(prod.id);
+                      const dragging = sort.drag;
                       return (
-                        <div key={prod.id} className="mb-1">
+                        <div
+                          key={prod.id}
+                          ref={sort.itemRef(i)}
+                          className={`mb-1 group relative ${dragging?.from === i ? "opacity-50" : ""} ${
+                            dragging && dragging.over === i && dragging.from !== i ? (dragging.over < dragging.from ? "border-t-2" : "border-b-2") + " border-[var(--accent)]" : ""
+                          }`}
+                        >
+                          {setProducts && genreProducts.length > 1 && (
+                            <span
+                              {...sort.handleProps(i)}
+                              className="absolute -left-3.5 top-1.5 text-[var(--text-muted)] opacity-0 group-hover:opacity-100 md:opacity-0 max-md:opacity-60 select-none"
+                            >
+                              <GripVertical size={13} />
+                            </span>
+                          )}
                           <button
                             onClick={() => {
                               const isCurrent = view === "productOverview" && selectedProductId === prod.id;
@@ -111,7 +141,8 @@ export function Sidebar({ products, projects, selectedId, selectedProductId, vie
                           )}
                         </div>
                       );
-                    })}
+                    }}
+                    </SortableList>
                   </div>
                 )}
               </div>
