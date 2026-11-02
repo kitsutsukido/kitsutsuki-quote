@@ -227,6 +227,7 @@ export default function App({ boot }) {
               patterns={patterns}
               onOpenProject={(id) => { setSelectedId(id); setView("project"); }}
               registerLot={registerLot}
+              onDeleteLot={deleteLot}
             />
           )}
 

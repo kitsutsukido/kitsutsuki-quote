@@ -48,7 +48,7 @@ export function LotHeader({ project, onSave, onDelete }) {
       <button onClick={save} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">保存</button>
       <button onClick={() => setEditing(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">取消</button>
       {onDelete && (
-        <button onClick={onDelete} className="ml-auto text-sm px-3 py-1.5 border border-[var(--danger)] text-[var(--danger)] rounded-md flex items-center gap-1">
+        <button onClick={onDelete} className="text-sm px-3 py-1.5 border border-[var(--danger)] text-[var(--danger)] rounded-md flex items-center gap-1">
           <Trash2 size={14} /> このロットを削除
         </button>
       )}
