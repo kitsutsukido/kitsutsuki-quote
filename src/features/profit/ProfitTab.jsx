@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
+import { useDragSort, arrayMove } from "../../lib/useDragSort.js";
 import { Chip } from "../../components/common/Chip.jsx";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
@@ -32,15 +33,11 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
     materializeAll(fees, (p) => ({ ...p, use: { ...p.use, [id]: true } }));
     saveSettings({ fees: next });
   };
-  // 並べ替え(上へ・下へ)。並び順は損益の計算には影響しない
-  const moveFee = (i, d) => {
-    const j = i + d;
-    if (j < 0 || j >= fees.length) return;
-    const next = [...fees];
-    [next[i], next[j]] = [next[j], next[i]];
+  // 並べ替え(つまみをドラッグ)。並び順は損益の計算には影響しない
+  const feeSort = useDragSort((from, to) => {
     materializeAll(fees);
-    saveSettings({ fees: next });
-  };
+    saveSettings({ fees: arrayMove(fees, from, to) });
+  });
   const removeFee = (f) => {
     if (!window.confirm(`「${f.name}」を削除しますか？(販売パターンの設定からも外れます)`)) return;
     materializeAll(fees, (p) => {
@@ -66,12 +63,25 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
     else overrides[feeId] = Number(v);
     updatePattern(p.id, { overrides });
   };
+  // 販売パターンの並べ替え(つまみをドラッグ)。全ロットのパターンが1つの配列なので、このロットの分だけ並びを入れ替える
+  const patternSort = useDragSort((from, to) => {
+    const moved = arrayMove(projectPatterns, from, to);
+    let k = 0;
+    setPatterns((prev) => prev.map((x) => (x.projectId === project.id ? moved[k++] : x)));
+  });
   const removePattern = (id) => setPatterns((prev) => prev.filter((p) => p.id !== id));
   const addPattern = () => {
     const id = `pp-${Date.now()}`;
     // 新しいパターンは、全部の項目を「使う」で始める
     setPatterns((prev) => [...prev, { id, projectId: project.id, name: "新しいパターン", use: Object.fromEntries(fees.map((f) => [f.id, true])), overrides: {} }]);
     setActivePatternId(id);
+  };
+  // ドラッグ中の見た目:動かしている行は半透明、落とす位置に線
+  const dragCls = (drag, i, base = "flex flex-wrap items-center gap-2") => {
+    if (!drag) return base;
+    if (i === drag.from) return `${base} opacity-50`;
+    if (i === drag.over) return `${base} ${drag.over < drag.from ? "border-t-2" : "border-b-2"} border-[var(--accent)]`;
+    return base;
   };
   const unit = (f) => (f.kind === "yen" ? "円/部" : "%");
 
@@ -88,11 +98,8 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
         <p className="text-xs text-[var(--text-muted)] mb-1">手数料・分配の項目(名前・種類・値を変えられます。販売パターンで使う項目を選びます)</p>
         <div className="space-y-2">
           {fees.map((f, i) => (
-            <div key={f.id} className="flex flex-wrap items-center gap-2">
-              <span className="flex flex-col">
-                <button onClick={() => moveFee(i, -1)} disabled={i === 0} title="上へ" className="text-[var(--text-muted)] disabled:opacity-30"><ChevronUp size={14} /></button>
-                <button onClick={() => moveFee(i, 1)} disabled={i === fees.length - 1} title="下へ" className="text-[var(--text-muted)] disabled:opacity-30"><ChevronDown size={14} /></button>
-              </span>
+            <div key={f.id} ref={feeSort.itemRef(i)} className={dragCls(feeSort.drag, i)}>
+              <span {...feeSort.handleProps(i)} className="text-[var(--text-muted)] p-1 -ml-1 select-none"><GripVertical size={16} /></span>
               <input className={`${inputCls} !w-48`} value={f.name} onChange={(e) => updateFee(f.id, { name: e.target.value })} aria-label="項目名" />
               <select className="border border-[var(--border)] rounded-md px-2 py-1.5 text-sm bg-[var(--card)]" value={f.kind} onChange={(e) => updateFee(f.id, { kind: e.target.value })}>
                 <option value="rate">売上の%</option>
@@ -118,10 +125,11 @@ export function ProfitTab({ project, sessions, lineItems, settings, setSettings,
           </button>
         </div>
         <div className="space-y-2">
-          {projectPatterns.map((p) => (
-            <div key={p.id} className="border border-[var(--border)] rounded-md p-3">
-              <div className="flex justify-between items-center mb-2">
-                <input className="text-sm font-medium border-b border-transparent hover:border-[var(--border)] focus:border-[var(--ink-soft)] outline-none"
+          {projectPatterns.map((p, i) => (
+            <div key={p.id} ref={patternSort.itemRef(i)} className={`border border-[var(--border)] rounded-md p-3 ${dragCls(patternSort.drag, i, "")}`}>
+              <div className="flex justify-between items-center mb-2 gap-2">
+                <span {...patternSort.handleProps(i)} className="text-[var(--text-muted)] p-1 -ml-1 select-none"><GripVertical size={16} /></span>
+                <input className="flex-1 min-w-0 text-sm font-medium border-b border-transparent hover:border-[var(--border)] focus:border-[var(--ink-soft)] outline-none bg-transparent"
                   value={p.name} onChange={(e) => updatePattern(p.id, { name: e.target.value })} />
                 <button onClick={() => removePattern(p.id)} className="text-[var(--danger)]"><Trash2 size={15} /></button>
               </div>
