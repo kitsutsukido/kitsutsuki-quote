@@ -110,6 +110,18 @@ export default function App({ boot }) {
     setView("productOverview");
   };
 
+  // ロットの部数が変わったときの明細の部数:元のロットの部数と同じ部数の明細だけ新しい部数にする
+  // (一部だけ1,000部などにしている明細はそのまま)。まとめ買い・まとめ刷りの明細は金額も計算し直す。
+  // それ以外の金額は自動では変えない(部数で単価が変わるため。コピーした明細は「前回のまま」の色で見直せる)。
+  const withLotQty = (it, oldQty, newQty) => {
+    if (!oldQty || !newQty || oldQty === newQty || Number(it.qty) !== Number(oldQty)) return it;
+    const next = { ...it, qty: newQty };
+    if (Number(it.bulkQty) > 0 && it.bulkAmount !== "" && it.bulkAmount != null) {
+      next.amount = Math.round((Number(it.bulkAmount) / Number(it.bulkQty)) * newQty);
+    }
+    return next;
+  };
+
   // baseSessionId を渡すと、その確定見積もりの明細をコピーした確定見積もりを新ロットに作る
   const registerLot = (productId, round, qty, baseSessionId) => {
     const newProject = {
@@ -149,6 +161,7 @@ export default function App({ boot }) {
       ]);
       const copies = lineItems
         .filter((it) => it.sessionId === base.id)
+        .map((it) => withLotQty(it, baseProject?.qty, newProject.qty))
         .map((it, i) => ({
           ...it,
           id: `qli-${Date.now()}-${i}`,
@@ -248,7 +261,23 @@ export default function App({ boot }) {
               >
                 {product.name}
               </button>
-              <LotHeader key={project.id} project={project} onSave={(patch) => setProjects((ps) => ps.map((x) => (x.id === project.id ? { ...x, ...patch } : x)))} onDelete={() => deleteLot(project)} />
+              <LotHeader
+                key={project.id}
+                project={project}
+                onSave={(patch) => {
+                  // 印刷部数を変えたら、このロットの明細のうち元の部数と同じものを新しい部数に合わせるか聞く
+                  if (patch.qty && patch.qty !== project.qty) {
+                    const sids = sessions.filter((x) => x.projectId === project.id).map((x) => x.id);
+                    const same = lineItems.filter((it) => sids.includes(it.sessionId) && Number(it.qty) === Number(project.qty));
+                    if (same.length && window.confirm(`このロットの明細のうち、部数が${project.qty}部の${same.length}件を${patch.qty}部に直しますか？\n(違う部数にしている明細はそのまま。金額は、まとめ買い・まとめ刷りの明細だけ計算し直します)`)) {
+                      const ids = new Set(same.map((it) => it.id));
+                      setLineItems((prev) => prev.map((it) => (ids.has(it.id) ? withLotQty(it, project.qty, patch.qty) : it)));
+                    }
+                  }
+                  setProjects((ps) => ps.map((x) => (x.id === project.id ? { ...x, ...patch } : x)));
+                }}
+                onDelete={() => deleteLot(project)}
+              />
 
               <div className="flex gap-1 border-b border-[var(--border)] mb-4">
                 {tabs.map((t) => (
