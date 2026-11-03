@@ -287,14 +287,16 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         </Field>
       </div>
 
-      {material && (
+      {(material || printKind) && (
         <div className="border border-[var(--border)] rounded-md p-3 space-y-2">
           <p className="text-xs text-[var(--text)]">
-            まとめ買いのとき(任意):買った数量と金額を入れると、上の「数量」の分の金額を自動で出します(買った金額 ÷ 買った数量 × 数量、円未満は四捨五入)。
+            {material
+              ? "まとめ買いのとき(任意):買った数量と金額を入れると、上の「数量」の分の金額を自動で出します(買った金額 ÷ 買った数量 × 数量、円未満は四捨五入)。"
+              : "まとめて刷るとき(任意):例えば1,000部刷って、このロットでは500部使うとき。刷った部数と金額を入れ、上の「部数」をこのロットで使う部数にすると、その分の金額を自動で出します(刷った金額 ÷ 刷った部数 × 部数、円未満は四捨五入)。"}
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="買った数量"><input type="number" className={inputCls} value={form.bulkQty ?? ""} onChange={setWithBulk("bulkQty")} placeholder="例：2500" /></Field>
-            <Field label="買った金額(合計)"><input type="number" className={inputCls} value={form.bulkAmount ?? ""} onChange={setWithBulk("bulkAmount")} placeholder="例：2500" /></Field>
+            <Field label={material ? "買った数量" : "刷った部数"}><input type="number" className={inputCls} value={form.bulkQty ?? ""} onChange={setWithBulk("bulkQty")} placeholder={material ? "例：2500" : "例：1000"} /></Field>
+            <Field label={material ? "買った金額(合計)" : "刷った金額(合計)"}><input type="number" className={inputCls} value={form.bulkAmount ?? ""} onChange={setWithBulk("bulkAmount")} placeholder={material ? "例：2500" : "例：4000"} /></Field>
           </div>
           {bulkUnit !== null && (
             <p className="text-xs text-[var(--text-muted)]">
