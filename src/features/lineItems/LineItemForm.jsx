@@ -12,11 +12,32 @@ const groupFormDefaults = { name: "", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
 export function LineItemForm({ groups, productId, setGroups, lineItems, setLineItems, onCancel, onSave, onDelete, sessionId, initial }) {
-  const [form, setForm] = useState(initial ? { ...initial } : createLineItem({ sessionId, groupId: groups[0]?.id || null }));
+  // 新しい明細は、いちばんよく使う紙(上質紙90kg)を最初から入れておく
+  const [form, setForm] = useState(() => {
+    if (initial) return { ...initial };
+    const f = createLineItem({ sessionId, groupId: groups[0]?.id || null });
+    return { ...f, paper: f.paper || "上質紙", weight: f.weight || "90kg" };
+  });
   const [processInput, setProcessInput] = useState("");
   const [groupFormTarget, setGroupFormTarget] = useState(null); // null=非表示 / "new"=新規追加 / それ以外=編集中のグループid
   const [groupForm, setGroupForm] = useState(groupFormDefaults);
   const isEdit = !!initial;
+  // よく使う紙と斤量の組み合わせ(これまでの印刷物の明細から、使った回数の多い順に6つ)。押すと紙・斤量にまとめて入る
+  const paperPresets = (() => {
+    const count = new Map();
+    for (const it of lineItems || []) {
+      if (it.kind && it.kind !== KIND_PRINT) continue;
+      // 「90kg」と「90㎏」のような書き方の違いはそろえて数える(NFKC)
+      const paper = (it.paper || "").normalize("NFKC").trim();
+      const weight = (it.weight || "").normalize("NFKC").trim();
+      if (!paper) continue;
+      const key = paper + "|" + weight;
+      count.set(key, { paper, weight, n: (count.get(key)?.n || 0) + 1 });
+    }
+    const list = [...count.values()].sort((a, b) => b.n - a.n).slice(0, 6);
+    if (!list.some((x) => x.paper === "上質紙" && x.weight === "90kg")) list.unshift({ paper: "上質紙", weight: "90kg" });
+    return list.slice(0, 6);
+  })();
   const isEditingGroup = groupFormTarget && groupFormTarget !== "new";
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -226,6 +247,17 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         )}
         {printKind && (
         <>
+        {paperPresets.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-[var(--text-muted)]">よく使う紙:</span>
+            {paperPresets.map((pp) => (
+              <Chip key={pp.paper + "|" + pp.weight} active={(form.paper || "").normalize("NFKC").trim() === pp.paper && (form.weight || "").normalize("NFKC").trim() === pp.weight}
+                onClick={() => setForm((f) => ({ ...f, paper: pp.paper, weight: pp.weight }))}>
+                {pp.paper}{pp.weight}
+              </Chip>
+            ))}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3">
           <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
           <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
