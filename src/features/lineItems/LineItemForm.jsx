@@ -3,6 +3,7 @@ import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { Chip } from "../../components/common/Chip.jsx";
+import { ComboInput } from "../../components/common/ComboInput.jsx";
 import { specString, isMaterial, isAssembly, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY } from "../../lib/spec.js";
 import { VendorPicker } from "./VendorPicker.jsx";
 import { createLineItem } from "../../data/seedData.js";
@@ -11,6 +12,11 @@ import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../..
 const groupFormDefaults = { name: "", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
+// サイズ・紙・斤量の候補(よく使うもの)。ほかは入力欄に直接書く
+const SIZE_OPTIONS = ["A3", "A4", "A5", "A6", "A7"];
+const PAPER_OPTIONS = ["上質紙", "マットコート", "コート紙"];
+const WEIGHT_OPTIONS = ["90kg", "110kg", "180kg"];
+
 export function LineItemForm({ groups, productId, setGroups, lineItems, setLineItems, onCancel, onSave, onDelete, sessionId, initial }) {
   const [form, setForm] = useState(initial ? { ...initial } : createLineItem({ sessionId, groupId: groups[0]?.id || null }));
   const [processInput, setProcessInput] = useState("");
@@ -227,9 +233,10 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         {printKind && (
         <>
         <div className="grid grid-cols-3 gap-3">
-          <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
-          <Field label="紙"><input className={inputCls} value={form.paper} onChange={set("paper")} placeholder="上質紙" /></Field>
-          <Field label="斤量"><input className={inputCls} value={form.weight} onChange={set("weight")} placeholder="90kg" /></Field>
+          <Field label="サイズ"><ComboInput className={inputCls} value={form.size} onChange={(v) => setForm((f) => ({ ...f, size: v }))} options={SIZE_OPTIONS} placeholder="選ぶか入力" /></Field>
+          {/* クリックすると候補が出る。候補にない紙・斤量はそのまま入力する */}
+          <Field label="紙"><ComboInput className={inputCls} value={form.paper} onChange={(v) => setForm((f) => ({ ...f, paper: v }))} options={PAPER_OPTIONS} placeholder="選ぶか入力" /></Field>
+          <Field label="斤量"><ComboInput className={inputCls} value={form.weight} onChange={(v) => setForm((f) => ({ ...f, weight: v }))} options={WEIGHT_OPTIONS} placeholder="選ぶか入力" /></Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <Field label={anySide ? "印刷の色数" : "表面の色数"}>
