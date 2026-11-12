@@ -12,7 +12,8 @@ import { flattenGroupTree, selfAndDescendantIds, selectableParents } from "../..
 const groupFormDefaults = { name: "", parentId: "" };
 
 // ---------- 明細追加/編集フォーム ----------
-// 紙・斤量の候補(よく使うもの)。ほかは入力欄に直接書く
+// サイズ・紙・斤量の候補(よく使うもの)。ほかは入力欄に直接書く
+const SIZE_OPTIONS = ["A3", "A4", "A5", "A6", "A7"];
 const PAPER_OPTIONS = ["上質紙", "マットコート", "コート紙"];
 const WEIGHT_OPTIONS = ["90kg", "110kg", "180kg"];
 
@@ -232,7 +233,7 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         {printKind && (
         <>
         <div className="grid grid-cols-3 gap-3">
-          <Field label="サイズ"><input className={inputCls} value={form.size} onChange={set("size")} placeholder="A6" /></Field>
+          <Field label="サイズ"><ComboInput className={inputCls} value={form.size} onChange={(v) => setForm((f) => ({ ...f, size: v }))} options={SIZE_OPTIONS} placeholder="選ぶか入力" /></Field>
           {/* クリックすると候補が出る。候補にない紙・斤量はそのまま入力する */}
           <Field label="紙"><ComboInput className={inputCls} value={form.paper} onChange={(v) => setForm((f) => ({ ...f, paper: v }))} options={PAPER_OPTIONS} placeholder="選ぶか入力" /></Field>
           <Field label="斤量"><ComboInput className={inputCls} value={form.weight} onChange={(v) => setForm((f) => ({ ...f, weight: v }))} options={WEIGHT_OPTIONS} placeholder="選ぶか入力" /></Field>
