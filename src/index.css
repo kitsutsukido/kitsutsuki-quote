@@ -50,12 +50,25 @@
   opacity: 0.45;
 }
 
-/* ヘッダー:チラシの上の帯(プラム地にクリームの文字、下に二重線) */
+/* ヘッダー:チラシの上の帯(プラム地にクリームの文字)。下の縁はチラシの枠のような「なみなみ」 */
 .zk-header {
+  position: relative;
+  z-index: 20;
   background: var(--ink-soft);
   color: var(--paper);
-  border-bottom: 3px double var(--paper);
-  box-shadow: 0 1px 0 var(--ink-soft);
+}
+.zk-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 6px;
+  pointer-events: none;
+  background-repeat: repeat-x;
+  background-size: 12px 6px;
+  /* 幅12px・高さ6pxの波1つ分(色はプラム #804B5D) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 0H12V2.5Q9 6 6 2.5T0 2.5Z' fill='%23804B5D'/%3E%3C/svg%3E");
 }
 
 /* 点線の区切り(チラシの本文と難易度の間の点線) */
