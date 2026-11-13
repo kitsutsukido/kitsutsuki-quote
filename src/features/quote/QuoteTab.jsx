@@ -4,7 +4,7 @@ import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 import { SpecText } from "../../components/common/SpecText.jsx";
-import { contentsText } from "../../lib/contentsText.js";
+import { contentsRows, contentsTitle, contentsTsv, contentsHtml, CONTENTS_COLUMNS } from "../../lib/contentsText.js";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
@@ -358,15 +358,28 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
           </div>
 
           {showContents && (() => {
-            const text = contentsText({ productName, lotName: project.round, qty: project.qty, groups: projectGroups, items });
+            const title = contentsTitle({ productName, lotName: project.round, qty: project.qty });
+            const rows = contentsRows({ groups: projectGroups, items });
+            const tsv = contentsTsv(title, rows);
+            // 表(HTML)とタブ区切りの両方を入れる。メールに貼れば表に、Excelに貼ればセルに分かれる
             const copy = async () => {
               try {
-                await navigator.clipboard.writeText(text);
+                if (window.ClipboardItem && navigator.clipboard.write) {
+                  await navigator.clipboard.write([
+                    new ClipboardItem({
+                      "text/html": new Blob([contentsHtml(title, rows)], { type: "text/html" }),
+                      "text/plain": new Blob([tsv], { type: "text/plain" }),
+                    }),
+                  ]);
+                } else {
+                  await navigator.clipboard.writeText(tsv);
+                }
                 setContentsCopied(true);
               } catch {
-                window.alert("コピーできませんでした。下の欄を選んでコピーしてください。");
+                window.alert("コピーできませんでした。表をドラッグで選んでコピーしてください。");
               }
             };
+            const cell = "border border-[var(--border)] px-2 py-1 align-top";
             return (
               <Modal>
                 <div className="bg-[var(--card)] rounded-lg p-4 space-y-3">
@@ -374,8 +387,20 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
                     <span className="font-medium">内職会社用の中身一覧(金額なし)</span>
                     <button onClick={() => setShowContents(false)} title="閉じる" className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)]"><X size={16} /></button>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)]">この見積もり「{activeSession?.label}」の明細から作っています。金額・単価・依頼先は入りません。コピーしてメールに貼ってください。</p>
-                  <textarea readOnly value={text} rows={Math.min(24, text.split("\n").length + 1)} className="w-full text-sm font-mono border border-[var(--border)] rounded-md p-2 bg-[var(--paper)]" onFocus={(e) => e.target.select()} />
+                  <p className="text-xs text-[var(--text-muted)]">この見積もり「{activeSession?.label}」の明細から作っています。金額・単価・依頼先は入りません。「コピー」を押して、メールやExcelに貼ってください(表のまま貼れます)。</p>
+                  <div className="text-sm">{title}</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr>{CONTENTS_COLUMNS.map((c) => <th key={c} className={`${cell} bg-[var(--paper)] text-left font-medium whitespace-nowrap`}>{c}</th>)}</tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r, i) => (
+                          <tr key={i}>{r.map((v, j) => <td key={j} className={`${cell} ${j === 3 ? "text-right font-mono" : ""} ${j === 0 ? "whitespace-nowrap" : ""}`}>{v}</td>)}</tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <div className="flex justify-end gap-2 items-center">
                     {contentsCopied && <span className="text-xs text-[var(--success)]">コピーしました</span>}
                     <button onClick={copy} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">コピー</button>
