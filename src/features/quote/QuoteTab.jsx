@@ -4,7 +4,7 @@ import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 import { SpecText } from "../../components/common/SpecText.jsx";
-import { contentsRows, contentsTitle, contentsTsv, contentsHtml, CONTENTS_COLUMNS } from "../../lib/contentsText.js";
+import { contentsRows, contentsTitle, contentsTsv, contentsHtml, CONTENTS_COLUMNS, CONTENTS_WIDTHS_PCT } from "../../lib/contentsText.js";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
@@ -382,7 +382,7 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
             };
             const cell = "border border-[var(--border)] px-2 py-1 align-top";
             return (
-              <Modal>
+              <Modal wide>
                 <div className="bg-[var(--card)] rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">内職会社用の中身一覧(金額なし)</span>
@@ -391,13 +391,14 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
                   <p className="text-xs text-[var(--text-muted)]">この見積もり「{activeSession?.label}」の明細から作っています。金額・単価・依頼先は入りません。「コピー」を押して、メールやExcelに貼ってください(表のまま貼れます)。</p>
                   <div className="text-sm">{title}</div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
+                    <table className="w-full min-w-[720px] table-fixed text-sm border-collapse">
+                      <colgroup>{CONTENTS_WIDTHS_PCT.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}</colgroup>
                       <thead>
                         <tr>{CONTENTS_COLUMNS.map((c) => <th key={c} className={`${cell} bg-[var(--paper)] text-left font-medium whitespace-nowrap`}>{c}</th>)}</tr>
                       </thead>
                       <tbody>
                         {rows.map((r, i) => (
-                          <tr key={i}>{r.map((v, j) => <td key={j} className={`${cell} ${j === 3 ? "text-right font-mono" : ""} ${j === 0 ? "whitespace-nowrap" : ""}`}>{v}</td>)}</tr>
+                          <tr key={i}>{r.map((v, j) => <td key={j} className={`${cell} break-words ${j === 3 ? "text-right font-mono" : ""}`}>{v}</td>)}</tr>
                         ))}
                       </tbody>
                     </table>
