@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Plus, X, Pencil, ChevronUp, ChevronDown, Check } from "lucide-react";
+import { Plus, X, Pencil, ChevronUp, ChevronDown, Check, ClipboardList } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 import { SpecText } from "../../components/common/SpecText.jsx";
+import { contentsRows, contentsTitle, contentsTsv, contentsHtml, CONTENTS_COLUMNS } from "../../lib/contentsText.js";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
-export function QuoteTab({ project, projects, setProjects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
+export function QuoteTab({ project, productName, projects, setProjects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
   const projectSessions = sessions.filter((s) => s.projectId === project.id);
   const [activeSessionId, setActiveSessionId] = useState(
     projectSessions.find((s) => s.status === "確定")?.id || projectSessions[0]?.id
@@ -16,6 +17,8 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
   const [editingItem, setEditingItem] = useState(null);
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [sessionLabelDraft, setSessionLabelDraft] = useState("");
+  const [showContents, setShowContents] = useState(false); // 内職会社用の中身一覧(金額なし)
+  const [contentsCopied, setContentsCopied] = useState(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
   // 念のため:選んでいる見積もりがこのロットのものでなければ(ロットを切り替えた直後など)、このロットの見積もりに戻す。
@@ -154,6 +157,7 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
       <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">
         {it.name}
         {it.unreviewed && <span className="ml-1.5 text-[10px] text-[var(--warn)] whitespace-nowrap">前回のまま</span>}
+        {it.remark && <span className="block text-xs text-[var(--text-muted)]">備考：{it.remark}</span>}
       </span>
       <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
         <SpecText item={it} />
@@ -299,6 +303,17 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
               </button>
             </div>
           )}
+          {items.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setContentsCopied(false); setShowContents(true); }}
+                className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]"
+                title="どの梱包に何が入っているかを、金額なしのテキストで出します(メールに貼る用)"
+              >
+                <ClipboardList size={14} /> 内職会社用の中身一覧(金額なし)
+              </button>
+            </div>
+          )}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
             {nested.map(function renderNode(node) {
               const { group, depth, directItems, children, count, subtotal } = node;
@@ -342,6 +357,60 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
               </span>
             </div>
           </div>
+
+          {showContents && (() => {
+            const title = contentsTitle({ productName, lotName: project.round, qty: project.qty });
+            const rows = contentsRows({ groups: projectGroups, items });
+            const tsv = contentsTsv(title, rows);
+            // 表(HTML)とタブ区切りの両方を入れる。メールに貼れば表に、Excelに貼ればセルに分かれる
+            const copy = async () => {
+              try {
+                if (window.ClipboardItem && navigator.clipboard.write) {
+                  await navigator.clipboard.write([
+                    new ClipboardItem({
+                      "text/html": new Blob([contentsHtml(title, rows)], { type: "text/html" }),
+                      "text/plain": new Blob([tsv], { type: "text/plain" }),
+                    }),
+                  ]);
+                } else {
+                  await navigator.clipboard.writeText(tsv);
+                }
+                setContentsCopied(true);
+              } catch {
+                window.alert("コピーできませんでした。表をドラッグで選んでコピーしてください。");
+              }
+            };
+            const cell = "border border-[var(--border)] px-2 py-1 align-top";
+            return (
+              <Modal>
+                <div className="bg-[var(--card)] rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">内職会社用の中身一覧(金額なし)</span>
+                    <button onClick={() => setShowContents(false)} title="閉じる" className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)]"><X size={16} /></button>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">この見積もり「{activeSession?.label}」の明細から作っています。金額・単価・依頼先は入りません。「コピー」を押して、メールやExcelに貼ってください(表のまま貼れます)。</p>
+                  <div className="text-sm">{title}</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr>{CONTENTS_COLUMNS.map((c) => <th key={c} className={`${cell} bg-[var(--paper)] text-left font-medium whitespace-nowrap`}>{c}</th>)}</tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r, i) => (
+                          <tr key={i}>{r.map((v, j) => <td key={j} className={`${cell} ${j === 3 ? "text-right font-mono" : ""} ${j === 0 ? "whitespace-nowrap" : ""}`}>{v}</td>)}</tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-end gap-2 items-center">
+                    {contentsCopied && <span className="text-xs text-[var(--success)]">コピーしました</span>}
+                    <button onClick={copy} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">コピー</button>
+                    <button onClick={() => setShowContents(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">閉じる</button>
+                  </div>
+                </div>
+              </Modal>
+            );
+          })()}
 
           {editingItem && (
             <Modal><LineItemForm

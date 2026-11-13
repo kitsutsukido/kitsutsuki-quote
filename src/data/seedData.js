@@ -64,6 +64,7 @@ export const createLineItem = (fields) => ({
   submitTo: "",
   leadTime: "",
   note: "",
+  remark: "", // 内職への備考(例:糊一点留め)。中身一覧の「備考」列に出す
   purchaseStatus: "未",
   plannedDate: "",
   actualDate: "",
