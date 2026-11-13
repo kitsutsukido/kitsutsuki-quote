@@ -23,7 +23,7 @@ export function Settings({ products, sync }) {
 
   return (
     <div className="max-w-2xl space-y-4">
-      <p className="text-lg font-medium text-[var(--ink)]">設定・連携</p>
+      <p className="zk-title zk-title-line text-lg font-bold text-[var(--ink)]">設定・連携</p>
 
       <BackupSettings
         data={{ members: sync.members, products: sync.products, projects: sync.projects, sessions: sync.sessions, lineItems: sync.lineItems, groups: sync.groups, profitSettings: sync.settings, profitPatterns: sync.patterns }}

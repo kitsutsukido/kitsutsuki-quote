@@ -25,7 +25,7 @@ export function Masters({ lineItems, setLineItems, projects, sessions, members, 
     <div className="max-w-2xl space-y-4">
       {!current ? (
         <>
-          <p className="text-lg font-medium text-[var(--ink)]">マスタ</p>
+          <p className="zk-title zk-title-line text-lg font-bold text-[var(--ink)]">マスタ</p>
           <div className="space-y-2">
             {MENU.map((m) => (
               <button
@@ -49,7 +49,7 @@ export function Masters({ lineItems, setLineItems, projects, sessions, members, 
           <button onClick={() => setSection(null)} className="text-sm text-[var(--accent)] flex items-center gap-1">
             <ChevronLeft size={16} /> マスタ一覧へ
           </button>
-          <p className="text-lg font-medium text-[var(--ink)]">{current.title}</p>
+          <p className="zk-title zk-title-line text-lg font-bold text-[var(--ink)]">{current.title}</p>
           {section === "members" && <MemberSettings members={members} setMembers={setMembers} />}
           {section === "vendors" && <VendorSettings lineItems={lineItems} />}
           {section === "materials" && <MaterialNames lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} />}

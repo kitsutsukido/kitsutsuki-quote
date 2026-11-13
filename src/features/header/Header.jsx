@@ -11,15 +11,15 @@ const SYNC_LABEL = {
 export function Header({ view, setView, onToggleMenu, syncStatus, onRetrySync }) {
   const label = SYNC_LABEL[syncStatus];
   return (
-    <header className="flex items-center gap-3 px-4 py-3 bg-[var(--card)] text-[var(--ink)] border-b border-[var(--border)]">
+    <header className="zk-header flex items-center gap-3 px-4 py-3">
       <button onClick={onToggleMenu} aria-label="メニュー" className="md:pointer-events-none -m-1 p-1 shrink-0">
         <Menu size={20} />
       </button>
-      <span className="font-display text-base font-semibold">{APP_NAME}</span>
+      <span className="font-display text-base font-bold tracking-[0.12em]">{APP_NAME}</span>
       {label && (
         <button
           onClick={syncStatus === "error" ? onRetrySync : undefined}
-          className={`ml-auto text-xs ${label[1] || "text-[var(--text-muted)]"}`}
+          className="ml-auto text-xs bg-[var(--card)] text-[var(--danger)] rounded px-2 py-0.5"
         >
           {label[0]}
         </button>
@@ -27,7 +27,7 @@ export function Header({ view, setView, onToggleMenu, syncStatus, onRetrySync })
       <button
         onClick={() => setView("settings")}
         title="設定・連携"
-        className={`${label ? "" : "ml-auto"} p-1.5 rounded-md hover:bg-[var(--paper)] ${view === "settings" ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`}
+        className={`${label ? "" : "ml-auto"} p-1.5 rounded-md hover:bg-white/15 ${view === "settings" ? "bg-white/20" : "opacity-85"}`}
       >
         <Settings size={18} />
       </button>

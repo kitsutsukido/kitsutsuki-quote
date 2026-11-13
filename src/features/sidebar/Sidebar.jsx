@@ -44,7 +44,7 @@ export function Sidebar({ products, setProducts, projects, selectedId, selectedP
   });
 
   return (
-    <aside className="w-64 min-h-full border-r border-[var(--border)] bg-[var(--card)] p-3">
+    <aside className="w-64 min-h-full border-r border-[var(--border)] bg-[var(--paper)] p-3">
       <button
         onClick={() => setView("dashboard")}
         className={`w-full text-left text-sm px-2 py-2 rounded-md mb-1 ${
@@ -135,7 +135,7 @@ export function Sidebar({ products, setProducts, projects, selectedId, selectedP
                                   }`}
                                 >
                                   <span className="truncate">{p.round}</span>
-                                  <span className={`text-[11px] ml-2 shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent)]"}`}>{p.status}</span>
+                                  <span className={`text-[11px] ml-2 shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent2-ink)] font-medium"}`}>{p.status}</span>
                                 </button>
                               ))}
                             </div>
