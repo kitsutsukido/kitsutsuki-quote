@@ -56,7 +56,8 @@ export default function App({ boot }) {
   const [settings, setSettings] = useState(() => init("profitSettings", loadProfitSettings, initialProfitSettings));
   const [patterns, setPatterns] = useState(() => init("profitPatterns", loadProfitPatterns, initialPatterns));
   const [tab, setTab] = useState("quote");
-  const [menuOpen, setMenuOpen] = useState(false); // スマホ幅でのサイドバー開閉
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [mastersKey, setMastersKey] = useState(0); // 左メニューの「マスタ」を押したら、マスタのメニューに戻す // スマホ幅でのサイドバー開閉
 
   useEffect(() => { if (!serverMode) saveProjects(projects); }, [projects, serverMode]);
   useEffect(() => { if (!serverMode) saveSessions(sessions); }, [sessions, serverMode]);
@@ -202,7 +203,7 @@ export default function App({ boot }) {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
+      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { if (v === "masters") setMastersKey((k) => k + 1); setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
 
       <div className="flex flex-1">
         {menuOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setMenuOpen(false)} />}
@@ -214,7 +215,7 @@ export default function App({ boot }) {
             selectedId={selectedId}
             selectedProductId={selectedProductId}
             view={view}
-            setView={(v) => { setView(v); setMenuOpen(false); }}
+            setView={(v) => { if (v === "masters") setMastersKey((k) => k + 1); setView(v); setMenuOpen(false); }}
             setSelectedId={(id) => { setSelectedId(id); setMenuOpen(false); }}
             onOpenProduct={(id) => { openProductOverview(id); setMenuOpen(false); }}
             onCreateNew={() => { setNewProductOpen(true); setMenuOpen(false); }}
@@ -249,7 +250,7 @@ export default function App({ boot }) {
             />
           )}
 
-          {view === "masters" && <Masters lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
+          {view === "masters" && <Masters key={`masters-${mastersKey}`} lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
           {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
 
           {view === "project" && (

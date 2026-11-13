@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { X, Plus } from "lucide-react";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { useVendors, KIND_PRINT, KIND_MATERIAL, KIND_ASSEMBLY, KIND_IGNORE, VENDOR_KIND_LABEL } from "../../lib/vendors.jsx";
@@ -50,51 +50,34 @@ function VendorList({ kind, lineItems, placeholder, help }) {
       {mine.length === 0 ? (
         <span className="text-xs text-[var(--text-muted)]">まだ登録がありません。</span>
       ) : (
-        <div className="overflow-x-auto border border-[var(--border)] rounded-md">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[var(--text-muted)] border-b border-[var(--border)] text-left text-xs">
-                <th className="py-1.5 px-2 font-normal whitespace-nowrap">会社名</th>
-                <th className="py-1.5 px-2 font-normal whitespace-nowrap">営業日に含まない日</th>
-                <th className="py-1.5 px-2 font-normal">メモ</th>
-                <th className="py-1.5 px-2 font-normal w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((v) => (
-                <Fragment key={v.name}>
-                <tr className="border-b border-[var(--border)] last:border-0">
-                  <td className="py-1.5 px-2 whitespace-nowrap align-top">{v.name}</td>
-                  <td className="py-1.5 px-2">
-                    <OffDays vendor={v} onChange={(fields) => patch(v.name, fields)} />
-                  </td>
-                  <td className="py-1.5 px-2">
-                    <input className={`${inputCls} min-w-[10rem]`} value={v.memo} placeholder="例: クリアファイルもここ" onChange={(e) => patch(v.name, { memo: e.target.value })} />
-                  </td>
-                  <td className="py-1.5 px-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(`「${v.name}」をマスタから削除します。よろしいですか？\n(これまでの明細の入力は変わりません)`)) remove(v.name);
-                      }}
-                      className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1"
-                    >
-                      削除
-                    </button>
-                  </td>
-                </tr>
-                {(offOf(v).summer || offOf(v).newyear) && (
-                  <tr className="border-b border-[var(--border)] last:border-0 bg-[var(--paper)]">
-                    <td></td>
-                    <td colSpan={3} className="py-2 px-2">
-                      <BreakSettings vendor={v} onChange={(fields) => patch(v.name, fields)} />
-                    </td>
-                  </tr>
-                )}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
+        // 会社ごとに1つの枠(カード)にする。休みの期間の設定も、その会社の枠の中に出す
+        <div className="space-y-2">
+          {shown.map((v) => (
+            <div key={v.name} className="border border-[var(--border)] rounded-md p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-[var(--ink)]">{v.name}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm(`「${v.name}」をマスタから削除します。よろしいですか？\n(これまでの明細の入力は変わりません)`)) remove(v.name);
+                  }}
+                  className="text-xs text-[var(--danger)] border border-[var(--border)] rounded-md px-2 py-1"
+                >
+                  削除
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">営業日に含まない日</span>
+                <OffDays vendor={v} onChange={(fields) => patch(v.name, fields)} />
+              </div>
+              {(offOf(v).summer || offOf(v).newyear) && (
+                <div className="bg-[var(--paper)] rounded-md p-2">
+                  <BreakSettings vendor={v} onChange={(fields) => patch(v.name, fields)} />
+                </div>
+              )}
+              <input className={inputCls} value={v.memo} placeholder="メモ(例: クリアファイルもここ)" onChange={(e) => patch(v.name, { memo: e.target.value })} />
+            </div>
+          ))}
         </div>
       )}
       <div className="flex gap-2">
