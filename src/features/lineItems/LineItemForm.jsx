@@ -294,6 +294,9 @@ export function LineItemForm({ groups, productId, setGroups, lineItems, setLineI
         </Field>
       </div>
 
+      {/* 仕様とは別の、内職会社への指示。見積もりタブの「内職会社用の中身一覧」の備考列に出る */}
+      <Field label="内職への備考(中身一覧に出ます)"><input className={inputCls} value={form.remark || ""} onChange={set("remark")} placeholder="例：糊一点留め" /></Field>
+
       {(material || printKind) && (
         <div className="border border-[var(--border)] rounded-md p-3 space-y-2">
           <p className="text-xs text-[var(--text)]">

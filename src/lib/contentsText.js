@@ -3,12 +3,12 @@ import { specString } from "./spec.js";
 
 // 内職会社に共有する「どの梱包の中に何が入っているか」の表(金額・単価・依頼先は入れない)。
 // 梱包の階層は「OPP › クリアファイル」のようなパスで1列にまとめる。
-export const CONTENTS_COLUMNS = ["梱包", "名前", "仕様", "数量"];
+export const CONTENTS_COLUMNS = ["梱包", "名前", "仕様", "数量", "備考"];
 
 // 見積もり画面と同じ並び(梱包の木の深さ優先)で行を作る。どの梱包にも入っていない明細は最後に
 export function contentsRows({ groups, items }) {
   const rows = [];
-  const toRow = (it, path) => [path, it.name || "", specString(it), Number(it.qty) || 0];
+  const toRow = (it, path) => [path, it.name || "", specString(it), Number(it.qty) || 0, it.remark || ""];
   const walk = (node) => {
     const path = groupPathLabel(groups, node.group.id);
     for (const it of items.filter((x) => x.groupId === node.group.id)) rows.push(toRow(it, path));

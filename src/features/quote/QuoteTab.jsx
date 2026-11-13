@@ -157,6 +157,7 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
       <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">
         {it.name}
         {it.unreviewed && <span className="ml-1.5 text-[10px] text-[var(--warn)] whitespace-nowrap">前回のまま</span>}
+        {it.remark && <span className="block text-xs text-[var(--text-muted)]">備考：{it.remark}</span>}
       </span>
       <span className="col-start-1 col-span-3 row-start-2 md:col-auto md:col-span-1 md:row-auto text-xs md:text-sm text-[var(--text-muted)] order-last md:order-none">
         <SpecText item={it} />
