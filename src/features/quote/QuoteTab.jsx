@@ -152,7 +152,7 @@ export function QuoteTab({ project, productName, projects, setProjects, sessions
   const row = (it, index, siblings) => (
     <div
       key={it.id}
-      className={`${it.unreviewed ? "bg-[var(--warn-soft)] -mx-1 px-1 rounded " : ""}grid grid-cols-[1fr_auto_auto] md:grid-cols-[20%_1fr_7rem_4rem_5rem_6rem_6rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b border-[var(--border)] last:border-0`}
+      className={`${it.unreviewed ? "bg-[var(--warn-soft)] -mx-1 px-1 rounded " : ""}grid grid-cols-[1fr_auto_auto] md:grid-cols-[20%_1fr_7rem_4rem_5rem_6rem_6rem] items-baseline gap-x-3 md:gap-x-0 gap-y-0.5 py-1.5 border-b zk-dotted border-[rgba(128,75,93,0.4)] last:border-0`}
     >
       <span className="col-start-1 row-start-1 md:col-auto md:row-auto md:pl-3 min-w-0 break-words">
         {it.name}

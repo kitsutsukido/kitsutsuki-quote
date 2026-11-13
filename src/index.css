@@ -1,22 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 在庫管理アプリ(謎文具キツツキ堂在庫台帳)と共通のカラートークン */
+/* 色はチラシ「キツツキだより」のトンマナ:プラムの枠・クリームの地・ピンクの差し色。
+   (在庫管理アプリとは別の配色。変数名は共通) */
 .zk-root {
-  --paper: #FBF6E8;
-  --card: #FFFFFF;
-  --border: #D7DEE2;
-  --ink: #1B3A4B;
-  --ink-2: #24495D;
-  --ink-soft: #35606F;
-  --text: #1F2D35;
-  --text-muted: #5C6B72;
-  --accent: #1A527A;
-  --accent-soft: #D9E6EC;
-  --accent2: #5B6E78;
+  --paper: #FFFAE7;      /* クリームの地 */
+  --card: #FFFDF6;
+  --border: #E6D9CC;
+  --ink: #5B3445;        /* 濃いプラム(見出し・強調) */
+  --ink-2: #6E4155;
+  --ink-soft: #804B5D;   /* チラシの枠のプラム */
+  --text: #3E2C33;
+  --text-muted: #7D6A70;
+  --accent: #804B5D;
+  --accent-soft: #F3E4E7;
+  --accent2: #D88187;    /* バッジのピンク */
+  --accent2-soft: #FBE9EA;
+  --accent2-ink: #A84B55; /* ピンク系で文字に使う色(地との差を確保) */
   --success: #3F7D5C;
   --success-soft: #DCEAE1;
   --warn: #8A5A00;
@@ -27,9 +30,37 @@
   font-family: 'IBM Plex Sans JP', sans-serif;
 }
 
-/* タイトルロゴ用の見出し書体 */
-.font-display {
-  font-family: 'Fraunces', serif;
+/* 見出しの書体(チラシに合わせた明朝体) */
+.font-display,
+.zk-title {
+  font-family: 'Zen Old Mincho', serif;
+  letter-spacing: 0.06em;
+}
+
+/* 画面のタイトル:チラシの「文庫シリーズ ――」のように、右に細い線を引く */
+.zk-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.zk-title-line::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid var(--ink-soft);
+  opacity: 0.45;
+}
+
+/* ヘッダー:チラシの上の帯(プラム地にクリームの文字、下に二重線) */
+.zk-header {
+  background: var(--ink-soft);
+  color: var(--paper);
+  border-bottom: 3px double var(--paper);
+  box-shadow: 0 1px 0 var(--ink-soft);
+}
+
+/* 点線の区切り(チラシの本文と難易度の間の点線) */
+.zk-dotted {
+  border-style: dotted !important;
 }
 
 /* 金額など数値表示用の等幅書体 */

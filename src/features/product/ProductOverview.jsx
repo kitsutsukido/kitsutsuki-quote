@@ -77,7 +77,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
 
   return (
     <div className="space-y-4">
-      <p className="text-lg font-medium text-[var(--ink)]">{product.name}</p>
+      <p className="zk-title zk-title-line text-lg font-bold text-[var(--ink)]">{product.name}</p>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
@@ -177,7 +177,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-[var(--ink)]">{p.round}</p>
-                <span className={`text-[11px] shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent)]"}`}>{p.status}</span>
+                <span className={`text-[11px] shrink-0 ${p.status === "完了" ? "text-[var(--text-muted)]" : "text-[var(--accent2-ink)] font-medium"}`}>{p.status}</span>
               </div>
               <p className="text-xs text-[var(--text-muted)] mt-1 font-mono">{p.qty}部</p>
             </button>

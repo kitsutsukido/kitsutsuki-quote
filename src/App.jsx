@@ -258,7 +258,7 @@ export default function App({ boot }) {
               <button
                 onClick={() => openProductOverview(product.id)}
                 title="この商品のダッシュボードへ"
-                className="text-lg font-medium mb-1 text-[var(--ink)] text-left hover:text-[var(--accent)] hover:underline underline-offset-4"
+                className="zk-title text-lg font-bold mb-1 text-[var(--ink)] text-left hover:text-[var(--accent)] hover:underline underline-offset-4"
               >
                 {product.name}
               </button>
@@ -286,7 +286,7 @@ export default function App({ boot }) {
                     key={t.id}
                     onClick={() => setTab(t.id)}
                     className={`text-sm px-3 py-2 border-b-2 -mb-px ${
-                      tab === t.id ? "border-[var(--accent)] text-[var(--accent)] font-medium" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
+                      tab === t.id ? "border-[var(--accent2)] text-[var(--ink)] font-bold" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)]"
                     }`}
                   >
                     {t.label}
