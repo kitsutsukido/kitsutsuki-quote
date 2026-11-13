@@ -8,6 +8,10 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
   const active = projects.filter((p) => p.status === "進行中");
   return (
     <div>
+      {/* 在庫管理アプリと同じく、ダッシュボードの上にロゴ。色はトンマナに合わせてプラム(public/logo-kitsutsukido.png、背景は透明) */}
+      <div className="flex items-center justify-center pt-2 pb-6">
+        <img src="/logo-kitsutsukido.png" alt="謎文具キツツキ堂" className="w-full max-w-xl h-auto" style={{ maxHeight: 150, objectFit: "contain" }} />
+      </div>
       <p className="zk-title zk-title-line text-lg font-bold mb-1 text-[var(--ink)]">ダッシュボード</p>
       <p className="text-sm text-[var(--text-muted)] mb-4">進行中の案件 {active.length}件</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
