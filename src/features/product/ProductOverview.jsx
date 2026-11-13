@@ -5,6 +5,7 @@ import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven, breakevenQty } from "../../lib/breakeven.js";
 import { feesOf } from "../../lib/profitFees.js";
 import { GroupManager } from "./GroupManager.jsx";
+import { sortLots } from "../../lib/lotOrder.js";
 
 // この商品の各案件のうち、確定見積もりを持つものの中から最新のものを探す
 function findLatestConfirmedLot(product, projects, sessions) {
@@ -24,7 +25,7 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ round: "", qty: "500", baseId: "" });
 
-  const productProjects = projects.filter((p) => p.productId === product.id);
+  const productProjects = sortLots(projects.filter((p) => p.productId === product.id));
   const confirmedOptions = productProjects.flatMap((p) =>
     sessions
       .filter((s) => s.projectId === p.id && s.status === "確定")

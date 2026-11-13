@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, ChevronRight, ChevronDown, Database, GripVertical } from "lucide-react";
 import { useDragSort, arrayMove } from "../../lib/useDragSort.js";
+import { sortLots } from "../../lib/lotOrder.js";
 
 // シリーズの中の商品を、つまみ(⋮⋮)のドラッグで並べ替える(フックをシリーズごとに使うため部品に分けている)
 function SortableList({ items, onMove, children }) {
@@ -85,7 +86,7 @@ export function Sidebar({ products, setProducts, projects, selectedId, selectedP
                       }}
                     >
                     {(prod, i, sort) => {
-                      const productProjects = projects.filter((p) => p.productId === prod.id);
+                      const productProjects = sortLots(projects.filter((p) => p.productId === prod.id));
                       const isProductOpen = openProducts.has(prod.id);
                       const dragging = sort.drag;
                       return (
