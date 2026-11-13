@@ -9,7 +9,7 @@ export function Dashboard({ products, projects, sessions, lineItems, onOpen }) {
   return (
     <div>
       {/* 在庫管理アプリと同じく、ダッシュボードの上にロゴ。色はトンマナに合わせてプラム(public/logo-kitsutsukido.png、背景は透明) */}
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl flex items-center justify-center px-6 py-6 mb-6">
+      <div className="flex items-center justify-center pt-2 pb-6">
         <img src="/logo-kitsutsukido.png" alt="謎文具キツツキ堂" className="w-full max-w-xl h-auto" style={{ maxHeight: 150, objectFit: "contain" }} />
       </div>
       <p className="zk-title zk-title-line text-lg font-bold mb-1 text-[var(--ink)]">ダッシュボード</p>
