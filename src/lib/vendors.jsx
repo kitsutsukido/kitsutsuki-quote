@@ -6,7 +6,9 @@ import { kvGet, kvPut } from "./remote.js";
 const LS_KEY = "zk-quote:vendors";
 const KV_KEY = "zk-quote:vendors";
 
-// 各要素は { name, kind, memo, days }。memo は自由記入、days は納期の数え方("calendar"=土日も数える / "business"=土日を除く / ""=未設定)。kind は "print"(印刷会社)・"material"(資材仕入先)・"assembly"(加工・組立の外注先)。
+// 各要素は { name, kind, memo, days, off?, breaks? }。memo は自由記入。
+// off は営業日に含まない日のチェック、breaks は夏期休暇・年末年始の期間(lib/businessDays.js)。
+// days は昔の納期の数え方("calendar"=土日も数える / "business"=土日を除く / ""=未設定)。off があれば off を使う。kind は "print"(印刷会社)・"material"(資材仕入先)・"assembly"(加工・組立の外注先)。
 // 昔の形(会社名の文字列だけ)は印刷会社として読む。
 export const KIND_PRINT = "print";
 export const KIND_MATERIAL = "material";
@@ -25,7 +27,11 @@ const clean = (list) => {
     if (name && !seen.has(key)) {
       seen.add(key);
       const o = v && typeof v === "object" ? v : {};
-      out.push({ name, kind, memo: String(o.memo || ""), days: o.days === "calendar" || o.days === "business" ? o.days : "" });
+      const v2 = { name, kind, memo: String(o.memo || ""), days: o.days === "calendar" || o.days === "business" ? o.days : "" };
+      // 営業日に含まない日(チェックボックス)と、夏期休暇・年末年始の期間(businessDays.js)
+      if (o.off && typeof o.off === "object") v2.off = { sat: !!o.off.sat, sun: !!o.off.sun, holiday: !!o.off.holiday, summer: !!o.off.summer, newyear: !!o.off.newyear };
+      if (o.breaks && typeof o.breaks === "object") v2.breaks = o.breaks;
+      out.push(v2);
     }
   }
   return out;

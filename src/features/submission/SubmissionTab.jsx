@@ -2,7 +2,8 @@ import { useState } from "react";
 import { SpecText } from "../../components/common/SpecText.jsx";
 import { CircleCheck, Undo2 } from "lucide-react";
 import { isMaterial, isAssembly, specString } from "../../lib/spec.js";
-import { useVendors, DAYS_LABEL } from "../../lib/vendors.jsx";
+import { useVendors } from "../../lib/vendors.jsx";
+import { offLabel, offOf, breaksBetween } from "../../lib/businessDays.js";
 import { submitDeadline, findVendor, deliveryDateOf, localToday } from "../../lib/deadlines.js";
 import { inputCls } from "../../components/common/inputStyles.js";
 
@@ -14,10 +15,11 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
   // 印刷場所・購入場所に対応するマスタの納期の数え方・メモ
   const vendorNote = (it) => {
     const v = findVendor(vendors, it);
-    if (!v || (!v.days && !v.memo)) return null;
+    const label = v ? offLabel(v) : "";
+    if (!v || (!label && !v.memo)) return null;
     return (
       <span className="block text-xs text-[var(--text-muted)]">
-        {v.days && <>納期: {DAYS_LABEL[v.days]}</>}{v.days && v.memo && " / "}{v.memo}
+        {label && <>営業日: {label}</>}{label && v.memo && " / "}{v.memo}
       </span>
     );
   };
@@ -153,7 +155,14 @@ export function SubmissionTab({ project, sessions, lineItems, setLineItems, memb
     return (
       <span className={`text-sm font-mono whitespace-nowrap ${late ? "text-[var(--danger)]" : ""}`}>
         {dl.date}
-        {dl.calc && <span className="block text-[10px] font-sans text-[var(--text-muted)]">{dl.base}の{it.printDays}日前</span>}
+        {dl.calc && (
+          <span className="block text-[10px] font-sans text-[var(--text-muted)]">
+            {dl.base}の{it.printDays}{Object.values(offOf(dl.vendor)).some(Boolean) ? "営業日" : "日"}前
+          </span>
+        )}
+        {dl.calc && breaksBetween(dl.vendor, dl.date, dl.base).length > 0 && (
+          <span className="block text-[10px] font-sans text-[var(--warn)]">{breaksBetween(dl.vendor, dl.date, dl.base).join("・")}をまたぎます</span>
+        )}
       </span>
     );
   };
