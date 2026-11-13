@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Plus, X, Pencil, ChevronUp, ChevronDown, Check } from "lucide-react";
+import { Plus, X, Pencil, ChevronUp, ChevronDown, Check, ClipboardList } from "lucide-react";
 import { GROUP_COLORS, colorForDepth } from "../../lib/colors.js";
 import { buildGroupTree } from "../../lib/groupTree.js";
 import { LineItemForm } from "../lineItems/LineItemForm.jsx";
 import { SpecText } from "../../components/common/SpecText.jsx";
+import { contentsText } from "../../lib/contentsText.js";
 import { Modal } from "../../components/common/Modal.jsx";
 
 // ---------- 見積もりタブ ----------
-export function QuoteTab({ project, projects, setProjects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
+export function QuoteTab({ project, productName, projects, setProjects, sessions, setSessions, groups, setGroups, lineItems, setLineItems }) {
   const projectSessions = sessions.filter((s) => s.projectId === project.id);
   const [activeSessionId, setActiveSessionId] = useState(
     projectSessions.find((s) => s.status === "確定")?.id || projectSessions[0]?.id
@@ -16,6 +17,8 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
   const [editingItem, setEditingItem] = useState(null);
   const [editingSessionId, setEditingSessionId] = useState(null);
   const [sessionLabelDraft, setSessionLabelDraft] = useState("");
+  const [showContents, setShowContents] = useState(false); // 内職会社用の中身一覧(金額なし)
+  const [contentsCopied, setContentsCopied] = useState(false);
 
   const projectGroups = groups.filter((g) => g.productId === project.productId);
   // 念のため:選んでいる見積もりがこのロットのものでなければ(ロットを切り替えた直後など)、このロットの見積もりに戻す。
@@ -299,6 +302,17 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
               </button>
             </div>
           )}
+          {items.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setContentsCopied(false); setShowContents(true); }}
+                className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md flex items-center gap-1 text-[var(--text)]"
+                title="どの梱包に何が入っているかを、金額なしのテキストで出します(メールに貼る用)"
+              >
+                <ClipboardList size={14} /> 内職会社用の中身一覧(金額なし)
+              </button>
+            </div>
+          )}
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
             {nested.map(function renderNode(node) {
               const { group, depth, directItems, children, count, subtotal } = node;
@@ -342,6 +356,35 @@ export function QuoteTab({ project, projects, setProjects, sessions, setSessions
               </span>
             </div>
           </div>
+
+          {showContents && (() => {
+            const text = contentsText({ productName, lotName: project.round, qty: project.qty, groups: projectGroups, items });
+            const copy = async () => {
+              try {
+                await navigator.clipboard.writeText(text);
+                setContentsCopied(true);
+              } catch {
+                window.alert("コピーできませんでした。下の欄を選んでコピーしてください。");
+              }
+            };
+            return (
+              <Modal>
+                <div className="bg-[var(--card)] rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">内職会社用の中身一覧(金額なし)</span>
+                    <button onClick={() => setShowContents(false)} title="閉じる" className="p-1 text-[var(--text-muted)] hover:text-[var(--accent)]"><X size={16} /></button>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">この見積もり「{activeSession?.label}」の明細から作っています。金額・単価・依頼先は入りません。コピーしてメールに貼ってください。</p>
+                  <textarea readOnly value={text} rows={Math.min(24, text.split("\n").length + 1)} className="w-full text-sm font-mono border border-[var(--border)] rounded-md p-2 bg-[var(--paper)]" onFocus={(e) => e.target.select()} />
+                  <div className="flex justify-end gap-2 items-center">
+                    {contentsCopied && <span className="text-xs text-[var(--success)]">コピーしました</span>}
+                    <button onClick={copy} className="text-sm px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] rounded-md">コピー</button>
+                    <button onClick={() => setShowContents(false)} className="text-sm px-3 py-1.5 border border-[var(--border)] rounded-md">閉じる</button>
+                  </div>
+                </div>
+              </Modal>
+            );
+          })()}
 
           {editingItem && (
             <Modal><LineItemForm
