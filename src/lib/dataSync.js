@@ -17,6 +17,7 @@ import {
   loadLineItems,
   loadProfitSettings,
   loadProfitPatterns,
+  loadProfitMaster,
 } from "./storage.js";
 
 // 見積もりデータ本体(案件・見積もり・明細・梱包グループ・収支設定)の保存先は、共有データ(KV)の1か所だけ。
@@ -31,7 +32,7 @@ import {
 export const DATA_KEY = "zk-quote:data";
 const MIGRATED_KEY = "zk-quote:migratedToShared";
 const BEFORE_KEY = "zk-quote:backup-before-sync";
-export const DATA_KEYS = ["members", "products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
+export const DATA_KEYS = ["members", "products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns", "profitMaster"];
 const SAVE_DELAY_MS = 1200;
 const POLL_MS = 30000;
 
@@ -44,6 +45,7 @@ const SEED = {
   groups: initialGroups,
   profitSettings: initialProfitSettings,
   profitPatterns: initialPatterns,
+  profitMaster: null, // 収支設定のマスタ(profitMaster.js)
 };
 
 export const sigOf = (d) => JSON.stringify(DATA_KEYS.map((k) => d[k]));
@@ -62,6 +64,7 @@ const readLocal = () => ({
   lineItems: loadLineItems(SEED.lineItems),
   profitSettings: loadProfitSettings(SEED.profitSettings),
   profitPatterns: loadProfitPatterns(SEED.profitPatterns),
+  profitMaster: loadProfitMaster(SEED.profitMaster),
 });
 
 const markMigrated = () => {

@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { ChevronRight, ChevronLeft, Users, Building2, Tag } from "lucide-react";
+import { ChevronRight, ChevronLeft, Users, Building2, Tag, Calculator } from "lucide-react";
 import { VendorSettings } from "../settings/VendorSettings.jsx";
 import { MemberSettings } from "../settings/MemberSettings.jsx";
 import { MaterialNames } from "./MaterialNames.jsx";
+import { ProfitMaster } from "./ProfitMaster.jsx";
+import { hasMaster } from "../../lib/profitMaster.js";
 import { useVendors, KIND_IGNORE } from "../../lib/vendors.jsx";
 import { isMaterial } from "../../lib/spec.js";
 
 // ---------- マスタ画面 ----------
-// 最初はメニュー(社員マスタ/印刷・資材会社/資材の名前の一括変更)。押すとその画面へ。マスタが増えたらメニューに足す。
-export function Masters({ lineItems, setLineItems, projects, sessions, members, setMembers }) {
-  const [section, setSection] = useState(null);
+// 最初はメニュー(社員マスタ/印刷・資材会社/収支設定/資材の名前の一括変更)。押すとその画面へ。マスタが増えたらメニューに足す。
+export function Masters({ lineItems, setLineItems, projects, sessions, members, setMembers, initialSection = null, profit }) {
+  const [section, setSection] = useState(initialSection);
   const { vendors } = useVendors();
   const vendorCount = vendors.filter((v) => v.kind !== KIND_IGNORE).length;
   const materialNames = new Set(lineItems.filter((it) => isMaterial(it) && (it.size || "").trim()).map((it) => it.size.normalize("NFKC").replace(/\s+/g, " ").trim())).size;
@@ -17,6 +19,7 @@ export function Masters({ lineItems, setLineItems, projects, sessions, members, 
   const MENU = [
     { id: "members", icon: Users, title: "社員マスタ", desc: "入稿・購入の担当者。在庫管理アプリと同期します。", count: `${members.length}人` },
     { id: "vendors", icon: Building2, title: "印刷・資材会社", desc: "印刷会社・資材仕入先・加工の外注先と、営業日(休み)の設定。", count: `${vendorCount}社` },
+    { id: "profit", icon: Calculator, title: "収支設定(手数料・分配と販売パターン)", desc: "全ロット共通の手数料・分配の項目と販売パターン。ロットごとに登録しなくてよくなります。", count: hasMaster(profit.master) ? `${profit.master.patterns.length}パターン` : "未作成" },
     { id: "materials", icon: Tag, title: "資材の名前の一括変更", desc: "資材の商品名を、全部のロットの明細でまとめて置き換えます。", count: `${materialNames}件` },
   ];
   const current = MENU.find((m) => m.id === section);
@@ -52,6 +55,7 @@ export function Masters({ lineItems, setLineItems, projects, sessions, members, 
           <p className="zk-title zk-title-line text-lg font-bold text-[var(--ink)]">{current.title}</p>
           {section === "members" && <MemberSettings members={members} setMembers={setMembers} />}
           {section === "vendors" && <VendorSettings lineItems={lineItems} />}
+          {section === "profit" && <ProfitMaster projects={projects} {...profit} />}
           {section === "materials" && <MaterialNames lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} />}
         </>
       )}

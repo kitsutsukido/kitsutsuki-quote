@@ -87,5 +87,12 @@ export function mergeData(base, mine, theirs) {
     out[key] = mergeArray(base[key], mine[key], theirs[key], keyOf);
   }
   out.profitSettings = mergeObject(base.profitSettings, mine.profitSettings, theirs.profitSettings);
+  // 収支設定のマスタ { fees, patterns }:項目の一覧・パターンの一覧ごとに合わせる(どちらにも無ければ null のまま)
+  const bm = base.profitMaster ?? null;
+  const mm = mine.profitMaster ?? null;
+  const tm = theirs.profitMaster ?? null;
+  if (mm === null && tm === null) out.profitMaster = null;
+  else if (mm === null || tm === null) out.profitMaster = same(bm, mm) ? tm : mm;
+  else out.profitMaster = mergeObject(bm, mm, tm);
   return out;
 }

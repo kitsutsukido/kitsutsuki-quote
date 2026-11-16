@@ -1,15 +1,24 @@
+import { resolveLotProfit } from "./profitMaster.js";
+import { withLegacyFields } from "./profitFees.js";
+
 // シリーズ(ジャンル)ごとのGoogleスプレッドシート(Apps Script ウェブアプリ)との同期。
 // 手動で「送信」を押したときだけ動く。送信はスプレッドシートの該当シートを丸ごと上書きする。
 // スプレッドシートからアプリへの取り込み(取得)は、データ消失の危険を避けるため画面から外した(一方向のみ)。
 // pullFromSheet は、送信後の件数確認のためだけに使う。
 
 // このシリーズの商品に属するデータだけを取り出す
-export function dataForGenre(genre, { products, projects, sessions, groups, lineItems, settings, patterns }) {
+// 収支設定のマスタを使うロットは、マスタの項目・販売パターンをそのロットの分として送る
+export function dataForGenre(genre, { products, projects, sessions, groups, lineItems, settings, patterns, profitMaster }) {
   const productIds = new Set(products.filter((p) => p.genre === genre).map((p) => p.id));
   const gProjects = projects.filter((p) => productIds.has(p.productId));
   const projectIds = new Set(gProjects.map((p) => p.id));
   const gSessions = sessions.filter((s) => projectIds.has(s.projectId));
   const sessionIds = new Set(gSessions.map((s) => s.id));
+  const resolved = gProjects.map((p) => ({ id: p.id, ...resolveLotProfit(p.id, settings, patterns, profitMaster) }));
+  const lotSettings = Object.fromEntries(
+    resolved.filter((r) => settings[r.id]).map((r) => [r.id, r.fromMaster ? withLegacyFields({ ...r.s, fees: r.fees }) : r.s])
+  );
+  const lotPatterns = resolved.flatMap((r) => r.patterns);
   return {
     projects: gProjects,
     sessions: gSessions,
@@ -17,14 +26,10 @@ export function dataForGenre(genre, { products, projects, sessions, groups, line
     groups: groups.filter((g) => productIds.has(g.productId)),
     // fees(項目の一覧)はシートの1セルに入るよう JSON の文字列にする(Apps Script側は今の版では使わない)
     profitSettings: Object.fromEntries(
-      Object.entries(settings)
-        .filter(([id]) => projectIds.has(id))
-        .map(([id, s]) => [id, Array.isArray(s.fees) ? { ...s, fees: JSON.stringify(s.fees) } : s])
+      Object.entries(lotSettings).map(([id, s]) => [id, Array.isArray(s.fees) ? { ...s, fees: JSON.stringify(s.fees) } : s])
     ),
     // use / overrides(項目ごとの使う・上書き)はシートの1セルに入るよう JSON の文字列にする
-    profitPatterns: patterns
-      .filter((p) => projectIds.has(p.projectId))
-      .map((p) => (p.use ? { ...p, use: JSON.stringify(p.use), overrides: JSON.stringify(p.overrides || {}) } : p)),
+    profitPatterns: lotPatterns.map((p) => (p.use ? { ...p, use: JSON.stringify(p.use), overrides: JSON.stringify(p.overrides || {}) } : p)),
   };
 }
 
