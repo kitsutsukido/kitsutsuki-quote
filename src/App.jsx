@@ -268,7 +268,7 @@ export default function App({ boot }) {
             />
           )}
 
-          {view === "masters" && <Masters key={`masters-${mastersKey}`} initialSection={mastersSection} profit={{ products, settings, setSettings, patterns, setPatterns, master: profitMaster, setMaster: setProfitMaster, backupData: { members, products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns, profitMaster } }} lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
+          {view === "masters" && <Masters key={`masters-${mastersKey}`} initialSection={mastersSection} profit={{ products, settings, patterns, master: profitMaster, setMaster: setProfitMaster }} lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
           {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, profitMaster, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns, setProfitMaster }} />}
 
           {view === "project" && (

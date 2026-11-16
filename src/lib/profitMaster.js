@@ -47,7 +47,6 @@ export function lotFromMaster(master, projectId) {
 
 // 比べるための形(id ではなく名前で比べる。並び順は計算に関係しないので見ない)
 const BASE = "項目の値";
-const unit = (kind) => (kind === "yen" ? "円/部" : "%");
 function shape(fees, patterns) {
   const feeMap = new Map(fees.map((f) => [f.name, { kind: f.kind, value: Number(f.value) || 0 }]));
   const patMap = new Map(
@@ -68,40 +67,6 @@ function shape(fees, patterns) {
 
 export const lotHasOwnSettings = (projectId, settings, patterns) =>
   Array.isArray(settings[projectId]?.fees) || patterns.some((p) => p.projectId === projectId);
-
-// ロットとマスタの違い(文の一覧。空ならマスタと同じ)
-export function diffWithMaster(projectId, settings, patterns, master) {
-  if (!lotHasOwnSettings(projectId, settings, patterns)) return ["手数料・分配と販売パターンが未設定"];
-  const own = patterns.filter((p) => p.projectId === projectId);
-  const a = shape(feesOf(settings[projectId], own), own);
-  const b = shape(master.fees, master.patterns);
-  const out = [];
-  for (const [name, f] of a.feeMap) {
-    const m = b.feeMap.get(name);
-    if (!m) out.push(`項目「${name}」はマスタに無い`);
-    else if (m.kind !== f.kind || m.value !== f.value) out.push(`${name}: ${f.value}${unit(f.kind)} → マスタ ${m.value}${unit(m.kind)}`);
-  }
-  for (const name of b.feeMap.keys()) if (!a.feeMap.has(name)) out.push(`項目「${name}」が無い`);
-  for (const [name, uses] of a.patMap) {
-    const m = b.patMap.get(name);
-    if (!m) {
-      out.push(`販売パターン「${name}」はマスタに無い`);
-      continue;
-    }
-    const diffs = [];
-    for (const feeName of new Set([...uses.keys(), ...m.keys()])) {
-      const x = uses.get(feeName) ?? null;
-      const y = m.get(feeName) ?? null;
-      if (x === y) continue;
-      if (x === null) diffs.push(`${feeName}を使っていない`);
-      else if (y === null) diffs.push(`${feeName}を使っている`);
-      else diffs.push(`${feeName} ${x} → マスタ ${y}`);
-    }
-    if (diffs.length) out.push(`販売パターン「${name}」: ${diffs.join("、")}`);
-  }
-  for (const name of b.patMap.keys()) if (!a.patMap.has(name)) out.push(`販売パターン「${name}」が無い`);
-  return out;
-}
 
 const sigOf = (projectId, settings, patterns) => {
   const own = patterns.filter((p) => p.projectId === projectId);
