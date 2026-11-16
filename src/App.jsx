@@ -16,7 +16,9 @@ import {
   loadGroups, saveGroups,
   loadProfitSettings, saveProfitSettings,
   loadProfitPatterns, saveProfitPatterns,
+  loadProfitMaster, saveProfitMaster,
 } from "./lib/storage.js";
+import { hasMaster, toMasterSettings } from "./lib/profitMaster.js";
 import { useSharedData } from "./lib/dataSync.js";
 import { NewProductModal } from "./components/NewProductModal.jsx";
 import { getInventoryMembers } from "./lib/remote.js";
@@ -55,7 +57,9 @@ export default function App({ boot }) {
   const [lineItems, setLineItems] = useState(() => init("lineItems", loadLineItems, initialLineItems));
   const [settings, setSettings] = useState(() => init("profitSettings", loadProfitSettings, initialProfitSettings));
   const [patterns, setPatterns] = useState(() => init("profitPatterns", loadProfitPatterns, initialPatterns));
+  const [profitMaster, setProfitMaster] = useState(() => init("profitMaster", loadProfitMaster, null));
   const [tab, setTab] = useState("quote");
+  const [mastersSection, setMastersSection] = useState(null); // マスタを開いたときの画面(収支設定タブの「マスタを開く」用)
   const [menuOpen, setMenuOpen] = useState(false);
   const [mastersKey, setMastersKey] = useState(0); // 左メニューの「マスタ」を押したら、マスタのメニューに戻す // スマホ幅でのサイドバー開閉
 
@@ -65,12 +69,13 @@ export default function App({ boot }) {
   useEffect(() => { if (!serverMode) saveLineItems(lineItems); }, [lineItems, serverMode]);
   useEffect(() => { if (!serverMode) saveProfitSettings(settings); }, [settings, serverMode]);
   useEffect(() => { if (!serverMode) saveProfitPatterns(patterns); }, [patterns, serverMode]);
+  useEffect(() => { if (!serverMode) saveProfitMaster(profitMaster); }, [profitMaster, serverMode]);
 
   // 共有データへの自動保存・最新の取り込み
   const sync = useSharedData({
     mode: boot.mode,
     initialUpdatedAt: boot.updatedAt,
-    data: { members, products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns },
+    data: { members, products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns, profitMaster },
     apply: (d) => {
       if (d.members) setMembers(d.members);
       if (d.products) setProducts(d.products);
@@ -80,6 +85,7 @@ export default function App({ boot }) {
       if (d.groups) setGroups(d.groups);
       if (d.profitSettings) setSettings(d.profitSettings);
       if (d.profitPatterns) setPatterns(d.profitPatterns);
+      if (d.profitMaster !== undefined) setProfitMaster(d.profitMaster);
     },
   });
 
@@ -134,10 +140,15 @@ export default function App({ boot }) {
     };
     setProjects((prev) => [...prev, newProject]);
     const base = baseSessionId ? sessions.find((x) => x.id === baseSessionId) : null;
-    // 収支設定・販売パターンは前のロットから引き継ぐ(金額のもとにした確定見積もりのロット、なければこの商品の一番新しいロット)
+    // 収支設定・販売パターンは前のロットから引き継ぐ(金額のもとにした確定見積もりのロット、なければこの商品の一番新しいロット)。
+    // 収支設定のマスタがあれば、新しいロットはマスタを使う(販売価格・税率だけ引き継ぐ)。
+    // 前のロットが「このロットだけ変える」にしていたときだけ、そのロットの項目・販売パターンをコピーする。
     const sameProduct = projects.filter((p) => p.productId === productId);
     const srcProject = (base && projects.find((p) => p.id === base.projectId)) || sameProduct[sameProduct.length - 1];
-    if (srcProject) {
+    const srcCustom = srcProject && settings[srcProject.id]?.useMaster === false;
+    if (hasMaster(profitMaster) && !srcCustom) {
+      setSettings((prev) => ({ ...prev, [newProject.id]: toMasterSettings(srcProject ? prev[srcProject.id] : null) }));
+    } else if (srcProject) {
       const srcSettings = settings[srcProject.id];
       if (srcSettings) {
         setSettings((prev) => ({ ...prev, [newProject.id]: JSON.parse(JSON.stringify(srcSettings)) }));
@@ -181,6 +192,12 @@ export default function App({ boot }) {
     setView("project");
   };
 
+  const openMasters = (section = null) => {
+    setMastersSection(section);
+    setMastersKey((k) => k + 1);
+    setView("masters");
+  };
+
   // ロットの削除。見積もり・明細・収支設定・販売パターンもまとめて消す(元に戻せない)
   const deleteLot = (target) => {
     if (projects.length <= 1) return window.alert("最後の1つのロットは削除できません。");
@@ -203,7 +220,7 @@ export default function App({ boot }) {
 
   return (
     <div className="zk-root min-h-screen flex flex-col bg-[var(--paper)] text-[var(--text)]">
-      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { if (v === "masters") setMastersKey((k) => k + 1); setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
+      <Header syncStatus={sync.status} onRetrySync={sync.retry} view={view} setView={(v) => { if (v === "masters") { setMastersSection(null); setMastersKey((k) => k + 1); } setView(v); setMenuOpen(false); }} onToggleMenu={() => setMenuOpen((o) => !o)} />
 
       <div className="flex flex-1">
         {menuOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setMenuOpen(false)} />}
@@ -215,7 +232,7 @@ export default function App({ boot }) {
             selectedId={selectedId}
             selectedProductId={selectedProductId}
             view={view}
-            setView={(v) => { if (v === "masters") setMastersKey((k) => k + 1); setView(v); setMenuOpen(false); }}
+            setView={(v) => { if (v === "masters") { setMastersSection(null); setMastersKey((k) => k + 1); } setView(v); setMenuOpen(false); }}
             setSelectedId={(id) => { setSelectedId(id); setMenuOpen(false); }}
             onOpenProduct={(id) => { openProductOverview(id); setMenuOpen(false); }}
             onCreateNew={() => { setNewProductOpen(true); setMenuOpen(false); }}
@@ -244,14 +261,15 @@ export default function App({ boot }) {
               setGroups={setGroups}
               settings={settings}
               patterns={patterns}
+              profitMaster={profitMaster}
               onOpenProject={(id) => { setSelectedId(id); setView("project"); }}
               registerLot={registerLot}
               onDeleteLot={deleteLot}
             />
           )}
 
-          {view === "masters" && <Masters key={`masters-${mastersKey}`} lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
-          {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns }} />}
+          {view === "masters" && <Masters key={`masters-${mastersKey}`} initialSection={mastersSection} profit={{ products, settings, setSettings, patterns, setPatterns, master: profitMaster, setMaster: setProfitMaster, backupData: { members, products, projects, sessions, lineItems, groups, profitSettings: settings, profitPatterns: patterns, profitMaster } }} lineItems={lineItems} setLineItems={setLineItems} projects={projects} sessions={sessions} members={members} setMembers={setMembers} />}
+          {view === "settings" && <Settings products={products} sync={{ members, setMembers, products, setProducts, projects, sessions, groups, lineItems, settings, patterns, profitMaster, setProjects, setSessions, setGroups, setLineItems, setSettings, setPatterns, setProfitMaster }} />}
 
           {view === "project" && (
             <>
@@ -310,6 +328,8 @@ export default function App({ boot }) {
                   setSettings={setSettings}
                   patterns={patterns}
                   setPatterns={setPatterns}
+                  master={profitMaster}
+                  onOpenMaster={() => openMasters("profit")}
                 />
               )}
             </>

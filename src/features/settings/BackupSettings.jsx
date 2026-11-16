@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { Download, Upload } from "lucide-react";
+import { BACKUP_APP_ID, BACKUP_KEYS, downloadBackup } from "../../lib/backup.js";
 
 // 見積もりのデータを、ファイルに書き出す(控え)・読み込む(控えから戻す)。
 // 合言葉・スプレッドシートURLは含めない。
-const APP_ID = "kitsutsuki-quote-backup";
-const DATA_KEYS = ["members", "products", "projects", "sessions", "lineItems", "groups", "profitSettings", "profitPatterns"];
+const APP_ID = BACKUP_APP_ID;
+const DATA_KEYS = BACKUP_KEYS;
 
 // data: 今のデータ({projects, ...})、applyData(d): データを置き換える
 export function BackupSettings({ data: current, applyData }) {
@@ -12,18 +13,7 @@ export function BackupSettings({ data: current, applyData }) {
   const [message, setMessage] = useState("");
 
   const exportData = () => {
-    const data = {};
-    for (const k of DATA_KEYS) if (current?.[k] !== undefined) data[k] = current[k];
-    const payload = { app: APP_ID, version: 1, exportedAt: new Date().toISOString(), data };
-    const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `kitsutsuki-quote-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    downloadBackup(current);
     setMessage("書き出しました。ダウンロードされたファイルを、読み込みたい端末に送ってください。");
   };
 

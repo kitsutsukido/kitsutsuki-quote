@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Field } from "../../components/common/Field.jsx";
 import { inputCls } from "../../components/common/inputStyles.js";
 import { computeBreakeven, breakevenQty } from "../../lib/breakeven.js";
-import { feesOf } from "../../lib/profitFees.js";
+import { resolveLotProfit } from "../../lib/profitMaster.js";
 import { GroupManager } from "./GroupManager.jsx";
 import { sortLots } from "../../lib/lotOrder.js";
 
@@ -21,7 +21,7 @@ function findLatestConfirmedLot(product, projects, sessions) {
 }
 
 // ---------- 商品サマリー画面 ----------
-export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, onOpenProject, registerLot, onDeleteLot }) {
+export function ProductOverview({ product, projects, sessions, lineItems, setLineItems, groups, setGroups, settings, patterns, profitMaster, onOpenProject, registerLot, onDeleteLot }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ round: "", qty: "500", baseId: "" });
 
@@ -44,10 +44,8 @@ export function ProductOverview({ product, projects, sessions, lineItems, setLin
       .reduce((sum, it) => sum + it.amount, 0);
     unitPrice = latest.project.qty ? costTotal / latest.project.qty : null;
 
-    const s = settings[latest.project.id];
-    const projectPatterns = patterns.filter((p) => p.projectId === latest.project.id);
-    if (s && projectPatterns.length) {
-      const fees = feesOf(s, projectPatterns);
+    const { s, fees, patterns: projectPatterns } = resolveLotProfit(latest.project.id, settings, patterns, profitMaster);
+    if (settings[latest.project.id] && projectPatterns.length) {
       margins = projectPatterns.map((pattern) => {
         const [row] = computeBreakeven(costTotal, latest.project.qty, s, pattern, [latest.project.qty], fees);
         return { id: pattern.id, name: pattern.name, margin: row.margin, be: breakevenQty(costTotal, s, pattern, fees) };
